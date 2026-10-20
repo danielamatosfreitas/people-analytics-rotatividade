@@ -25,7 +25,7 @@ A base é uma rede fictícia com 3 unidades, 80 vagas e 24 meses (outubro de 202
 2. **Quantas saem nos primeiros 90 dias?** Quantas, em que áreas e qual o peso dessas saídas no total.
 3. **A falta aumenta antes da saída?** Faltas nos 3 meses antes da saída comparadas com as de quem ficou, nos mesmos meses do calendário (grupo de comparação).
 4. **Quanto custa a rotatividade?** Rescisão, reposição e tempo até a pessoa nova render, com premissas declaradas e análise de sensibilidade em três cenários (baixo, médio e alto).
-5. **Onde abrir a conversa primeiro?** Índice de 0 a 1 por área e por líder, com componentes normalizados, pesos fixos e a contribuição de cada componente à vista. Componente sem base suficiente (menos de 5 admissões, no caso dos 90 dias) sai da conta, sem valor imputado, e os pesos dos outros são redistribuídos na mesma proporção (0,40 e 0,30 viram 0,57 e 0,43); a linha fica marcada como "índice com 2 de 3 componentes". Sem modelo de previsão e sem rótulo de pessoa.
+5. **Onde abrir a conversa primeiro?** Índice de 0 a 1 por área e por líder, com componentes normalizados, pesos fixos e a contribuição de cada componente à vista, seguindo os três limites de base descritos em Ética e LGPD. Sem modelo de previsão e sem rótulo de pessoa.
 
 ### O que o método encontra (padrões plantados)
 
@@ -52,7 +52,10 @@ A base tem só código da pessoa (P0001...), unidade, área, cargo, líder (L01 
 ### Ética e LGPD
 
 * **Índice por área e por líder, nunca por pessoa.** O que se procura são condições de trabalho do grupo; um índice individual viraria previsão sobre alguém.
-* **Regra de base mínima:** grupo com menos de 5 pessoas não recebe percentual nem índice e aparece como "base insuficiente", porque em grupo pequeno o percentual identifica a pessoa mesmo sem nome. Todo percentual vem com o número absoluto ao lado.
+* **Regra de base mínima:** em grupo pequeno o percentual identifica a pessoa mesmo sem nome. Todo percentual vem com o número absoluto ao lado, e grupo com menos de 5 pessoas aparece "sem percentual". No índice valem três limites:
+  * **sem índice:** grupo com menos de 5 pessoas;
+  * **fora da conta:** com menos de 5 admissões, o componente dos 90 dias sai do cálculo e os pesos dos demais são redistribuídos na mesma proporção (0,40 e 0,30 viram 0,57 e 0,43), com a marcação "índice com 2 de 3 componentes";
+  * **base pequena:** com menos de 10 pessoas ou de 10 admissões, o índice aparece, com leitura cautelosa (marcado com *).
 * **Sem dados sensíveis** (Lei 13.709/2018, art. 5º, II): nada de saúde, origem racial, religião, opinião política, filiação sindical, vida sexual, dados genéticos ou biométricos. Faltas sem motivo, porque o motivo pode revelar saúde.
 * **Limites de uso:** o índice serve para abrir conversa com a liderança e orientar ações de retenção, nunca para avaliação de desempenho, punição ou decisão sobre uma pessoa. Faltas entram como sinal do grupo; em nenhum caso o índice deve ser usado para cobrar presença de uma pessoa ou questionar atestado.
 
@@ -90,11 +93,11 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 
 ### Como os testes funcionam
 
-`python -m pytest` roda 29 testes, sem internet e em poucos segundos:
+`python -m pytest` roda 30 testes, sem internet e em poucos segundos:
 
 * **Dados** (`tests/test_dados.py`): a mesma semente gera exatamente os mesmos dados e o CSV incluído no repositório é igual ao gerado; nenhuma coluna sensível nem salário individual; os totais batem (quadro do mês anterior mais admissões menos saídas igual ao quadro do mês, em todos os meses, e a soma das áreas igual à rede).
 * **Métricas** (`tests/test_metricas.py`): casos pequenos montados à mão, em que o resultado certo se confere de cabeça (rotatividade, 90 dias, faltas com grupo de comparação, custo e cenários). No índice: os componentes ponderados somam o índice, grupos com menos de 5 pessoas não recebem índice e componente sem base não entra (os pesos restantes somam 1).
-* **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "base insuficiente" abaixo de 5, fim de cada barra do gráfico do índice igual ao índice e plotly por CDN.
+* **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "sem percentual" abaixo de 5, frase do asterisco com exatamente as equipes fora da base pequena, fim de cada barra do gráfico do índice igual ao índice e plotly por CDN.
 
 ### Estrutura
 
@@ -132,7 +135,7 @@ The data is a fictitious chain with 3 stores, 80 positions and 24 months (Octobe
 2. **How many leave in the first 90 days?** How many, in which areas and their share of all exits.
 3. **Do absences rise before an exit?** Absences in the 3 months before leaving compared with people who stayed, in the same calendar months (comparison group).
 4. **How much does turnover cost?** Severance, replacement and time to full productivity, with declared assumptions and a sensitivity analysis in three scenarios (low, medium, high).
-5. **Where to start the conversation?** A 0 to 1 index by area and by team leader, with normalized components, fixed weights and each component's contribution in plain sight. A component without enough base (fewer than 5 hires, for the 90 day component) is left out, with no imputed value, and the other weights are scaled up in the same proportion (0.40 and 0.30 become 0.57 and 0.43); the row is marked "índice com 2 de 3 componentes" (index with 2 of 3 components). No prediction model and no label on any person.
+5. **Where to start the conversation?** A 0 to 1 index by area and by team leader, with normalized components, fixed weights and each component's contribution in plain sight, following the three base limits described under Ethics and LGPD. No prediction model and no label on any person.
 
 ### What the method finds (planted patterns)
 
@@ -151,7 +154,10 @@ These results recover what was planted in the generator. The goal is to demonstr
 ### Ethics and LGPD (Brazil's data protection law)
 
 * **Index by area and team leader, never by person.** The goal is to find group working conditions; an individual index would become a prediction about someone.
-* **Minimum group size:** groups with fewer than 5 people get no percentage and no index and show "base insuficiente" (insufficient base), because in a small group a percentage identifies the person even without a name. Every percentage comes with the absolute number next to it.
+* **Minimum group size:** in a small group a percentage identifies the person even without a name. Every percentage comes with the absolute number next to it, and groups with fewer than 5 people show "sem percentual" (no percentage). The index has three limits:
+  * **"sem índice" (no index):** group with fewer than 5 people;
+  * **"fora da conta" (left out):** with fewer than 5 hires, the 90 day component is removed from the calculation and the other weights are scaled up in the same proportion (0.40 and 0.30 become 0.57 and 0.43), marked "índice com 2 de 3 componentes";
+  * **"base pequena" (small base):** with fewer than 10 people or 10 hires, the index is shown but should be read with caution (marked with *).
 * **No sensitive data** (Law 13,709/2018, art. 5, II): no health, racial origin, religion, political opinion, union membership, sex life, genetic or biometric data. Absences have no reason attached, since the reason can reveal health information.
 * **Use limits:** the index is for opening a conversation with leadership and guiding retention actions, never for performance review, punishment or decisions about a specific person. Absences count as a group signal; under no circumstances should the index be used to press a person about attendance or to question a medical certificate.
 
@@ -172,7 +178,7 @@ The first script generates the fictitious data (fixed seed), the second runs the
 
 ### Tests
 
-`python -m pytest` runs 29 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value.
+`python -m pytest` runs 30 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value; the asterisk note names exactly the teams outside the small base.
 
 ### Author and license
 

@@ -14,10 +14,10 @@ def test_percentual_sempre_com_numero_absoluto():
 
 
 def test_grupo_com_menos_de_5_nao_recebe_percentual():
-    assert r.fracao(2, 4) == "base insuficiente"
-    assert r.fracao(0, 0) == "base insuficiente"
-    assert r.taxa_ano(0.5, 2, 4.0, 4) == "base insuficiente"
-    assert r.falta_txt(3, 60, 4) == "base insuficiente"
+    assert r.fracao(2, 4) == "sem percentual"
+    assert r.fracao(0, 0) == "sem percentual"
+    assert r.taxa_ano(0.5, 2, 4.0, 4) == "sem percentual"
+    assert r.falta_txt(3, 60, 4) == "sem percentual"
 
 
 def test_fim_de_cada_barra_do_indice_e_igual_ao_indice():
@@ -45,3 +45,22 @@ def test_relatorio_publicado_usa_plotly_por_cdn_e_nao_embute_a_biblioteca():
     assert re.search(r'<script[^>]+src="https://cdn\.plot\.ly/plotly-[\d.]+\.min\.js"', pagina)
     assert len(pagina) < 1_000_000  # com a biblioteca embutida, o arquivo passava de 4 MB
     assert pagina.count("cdn.plot.ly") == 1
+
+
+def test_frase_do_asterisco_cita_exatamente_as_equipes_que_escapam_da_marcacao():
+    import re as _re
+    from analise import metricas as m
+    premissas = m.carregar_premissas(RAIZ / "config" / "premissas.toml")
+    pessoas, faltas = m.carregar_dados(RAIZ / "dados")
+    meses = m.meses_do_periodo(premissas["periodo"]["inicio"], premissas["periodo"]["meses"])
+    base_minima, base_pequena = premissas["relatorio"]["base_minima"], premissas["relatorio"]["base_pequena"]
+    indice = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, ["unidade", "area", "lider"]), premissas["indice"], base_minima)
+    r.BASE_MINIMA, r.BASE_PEQUENA = base_minima, base_pequena
+    frase, fortes = r.frase_asterisco(indice)
+    # conta independente: com índice e base de 10 ou mais pessoas e de 10 ou mais admissões
+    esperado = sorted(indice[(indice["pessoas_12m"] >= base_pequena) & (indice["admitidos_90_dias"] >= base_pequena)
+                             & ~indice["base_insuficiente"]]["lider"])
+    assert fortes == esperado
+    assert sorted(_re.findall(r"L\d\d", frase)) == esperado
+    # e é essa a frase publicada abaixo do gráfico
+    assert frase in (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
