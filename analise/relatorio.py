@@ -194,14 +194,25 @@ def grafico_html(fig: go.Figure, div_id: str, carregar_plotly: bool = False) -> 
                        config=CONFIG_PLOTLY, div_id=div_id)
 
 
+def saidas_txt(n) -> str:
+    """Singular e plural escritos por extenso: "1 saída", "3 saídas"."""
+    n = int(n)
+    return f"{n} {'saída' if n == 1 else 'saídas'}"
+
+
+def meses_antes_txt(k) -> str:
+    k = int(k)
+    return f"{k} {'mês' if k == 1 else 'meses'} antes da saída"
+
+
 def fig_mensal(mensal: pd.DataFrame) -> go.Figure:
     x = [mes_curto(p) for p in mensal["mes"]]
     fig = go.Figure()
     for col, nome, cor, qtd in [("taxa_pedido", "Pedido de demissão", VERDE, "saidas_pedido"),
                                 ("taxa_empresa", "Desligamento pela empresa", DOURADO, "saidas_empresa")]:
         fig.add_bar(x=x, y=mensal[col], name=nome, marker_color=cor, marker_line_color="#FFFFFF",
-                    marker_line_width=1, customdata=mensal[[qtd, "quadro_medio"]].values,
-                    hovertemplate="%{x}<br>" + nome + ": %{customdata[0]} saída(s)<br>"
+                    marker_line_width=1, customdata=[[saidas_txt(s), q] for s, q in zip(mensal[qtd], mensal["quadro_medio"])],
+                    hovertemplate="%{x}<br>" + nome + ": %{customdata[0]}<br>"
                                   "%{y:.1%} do quadro médio (%{customdata[1]:.1f} pessoas)<extra></extra>")
     media = mensal["taxa"].mean()
     fig.add_hline(y=media, line_dash="dot", line_color=CINZA, line_width=1.5,
@@ -221,8 +232,8 @@ def fig_equipes_taxa(anual: pd.DataFrame, rede: float, saidas_rede: int) -> go.F
     for col, nome, cor, qtd in [("taxa_anual_pedido", "Pedido de demissão", VERDE, "saidas_pedido"),
                                 ("taxa_anual_empresa", "Desligamento pela empresa", DOURADO, "saidas_empresa")]:
         fig.add_bar(y=y, x=df[col], orientation="h", name=nome, marker_color=cor, marker_line_color="#FFFFFF",
-                    marker_line_width=1, customdata=df[[qtd, "quadro_medio"]].values,
-                    hovertemplate="%{y}<br>" + nome + ": %{customdata[0]} saída(s) em 24 meses<br>"
+                    marker_line_width=1, customdata=[[saidas_txt(s), q] for s, q in zip(df[qtd], df["quadro_medio"])],
+                    hovertemplate="%{y}<br>" + nome + ": %{customdata[0]} em 24 meses<br>"
                                   "%{x:.0%} ao ano (quadro médio %{customdata[1]:.1f})<extra></extra>")
     fig.add_vline(x=rede, line_dash="dot", line_color=CINZA, line_width=1.5,
                   annotation_text=f"rede: {pct(rede)} ao ano ({saidas_rede} saídas)", annotation_position="top",
@@ -262,8 +273,9 @@ def fig_faltas(curva: pd.DataFrame, ficou: float) -> go.Figure:
                   annotation_font_color=TINTA, annotation_font_size=12)
     fig.add_scatter(x=x, y=c["absenteismo"], mode="lines+markers", name="Quem saiu",
                     line=dict(color=VERDE, width=2), marker=dict(size=8, color=VERDE),
-                    customdata=c[["pessoas", "faltas", "dias_previstos"]].values,
-                    hovertemplate="%{x} mês(es) antes da saída<br>Base do ponto: %{customdata[0]} pessoas que saíram<br>"
+                    customdata=[[p, f, d, meses_antes_txt(k)] for p, f, d, k
+                                in zip(c["pessoas"], c["faltas"], c["dias_previstos"], c["meses_antes"])],
+                    hovertemplate="%{customdata[3]}<br>Base do ponto: %{customdata[0]} pessoas que saíram<br>"
                                   "Absenteísmo %{y:.1%} (%{customdata[1]} faltas em %{customdata[2]} dias previstos)"
                                   "<extra></extra>")
     fig.add_scatter(x=[x[0], x[-1]], y=[ficou, ficou], mode="lines", name="Quem ficou (mesmos meses)",
@@ -282,8 +294,8 @@ def fig_custo_area(custos: pd.DataFrame) -> go.Figure:
     for col, nome, cor in [("rescisao", "Rescisão", VERDE), ("reposicao", "Reposição", DOURADO),
                            ("rampa", "Tempo até render", VERDE_MEDIO)]:
         fig.add_bar(y=df["area"], x=df[col], orientation="h", name=nome, marker_color=cor,
-                    marker_line_color="#FFFFFF", marker_line_width=1, customdata=df[["saidas"]].values,
-                    hovertemplate="%{y}<br>" + nome + ": R$ %{x:,.0f}<br>%{customdata[0]} saída(s)<extra></extra>")
+                    marker_line_color="#FFFFFF", marker_line_width=1, customdata=[saidas_txt(s) for s in df["saidas"]],
+                    hovertemplate="%{y}<br>" + nome + ": R$ %{x:,.0f}<br>%{customdata}<extra></extra>")
     fig.update_layout(barmode="stack")
     estilo(fig, 300, None, "Custo em 24 meses (R$)")
     fig.update_xaxes(tickformat=",.0f", showgrid=True, gridcolor="#ECE7DC")

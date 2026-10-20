@@ -64,3 +64,13 @@ def test_frase_do_asterisco_cita_exatamente_as_equipes_que_escapam_da_marcacao()
     assert sorted(_re.findall(r"L\d\d", frase)) == esperado
     # e é essa a frase publicada abaixo do gráfico
     assert frase in (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
+
+
+def test_relatorio_sem_plural_entre_parenteses():
+    # o HTML guarda os textos dos gráficos com acentos escapados (\u00ea); decodifica antes de procurar
+    pagina = (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
+    texto = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), pagina)
+    assert "(es)" not in texto
+    assert "(s)" not in texto
+    assert r.meses_antes_txt(1) == "1 mês antes da saída" and r.meses_antes_txt(12) == "12 meses antes da saída"
+    assert r.saidas_txt(1) == "1 saída" and r.saidas_txt(3) == "3 saídas"
