@@ -3,7 +3,8 @@
 Projeto de People Analytics com dados totalmente fictícios, de Daniela Matos
 ([LinkedIn](https://www.linkedin.com/in/danielamatosfreitas) · [capitalhumanointelligence.com](https://capitalhumanointelligence.com)).
 
-**Relatório / Report:** https://danielamatosfreitas.github.io/people-analytics-rotatividade/
+**Relatório:** [https://danielamatosfreitas.github.io/people-analytics-rotatividade/](https://danielamatosfreitas.github.io/people-analytics-rotatividade/)  
+**Report:** [https://danielamatosfreitas.github.io/people-analytics-rotatividade/](https://danielamatosfreitas.github.io/people-analytics-rotatividade/)
 
 [Português](#português) · [English](#english)
 
@@ -89,11 +90,11 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 
 ### Como os testes funcionam
 
-`python -m pytest` roda 28 testes, sem internet e em poucos segundos:
+`python -m pytest` roda 29 testes, sem internet e em poucos segundos:
 
 * **Dados** (`tests/test_dados.py`): a mesma semente gera exatamente os mesmos dados e o CSV incluído no repositório é igual ao gerado; nenhuma coluna sensível nem salário individual; os totais batem (quadro do mês anterior mais admissões menos saídas igual ao quadro do mês, em todos os meses, e a soma das áreas igual à rede).
 * **Métricas** (`tests/test_metricas.py`): casos pequenos montados à mão, em que o resultado certo se confere de cabeça (rotatividade, 90 dias, faltas com grupo de comparação, custo e cenários). No índice: os componentes ponderados somam o índice, grupos com menos de 5 pessoas não recebem índice e componente sem base não entra (os pesos restantes somam 1).
-* **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "base insuficiente" abaixo de 5 e plotly por CDN.
+* **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "base insuficiente" abaixo de 5, fim de cada barra do gráfico do índice igual ao índice e plotly por CDN.
 
 ### Estrutura
 
@@ -171,7 +172,7 @@ The first script generates the fictitious data (fixed seed), the second runs the
 
 ### Tests
 
-`python -m pytest` runs 28 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number.
+`python -m pytest` runs 29 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value.
 
 ### Author and license
 

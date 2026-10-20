@@ -114,3 +114,6 @@ referencia_absenteismo_6m = 0.08     # 8% dos dias previstos em falta vale 1
 # Regra de base pequena: grupo com menos pessoas que isto não recebe percentual nem índice.
 [relatorio]
 base_minima = 5
+# Grupo com menos pessoas que isto (ou componente dos 90 dias com menos admissões) recebe a marcação "base pequena":
+# 1 ou 2 eventos já mudam a posição no ranking.
+base_pequena = 10

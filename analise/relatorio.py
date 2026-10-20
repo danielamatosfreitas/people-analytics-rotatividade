@@ -98,9 +98,9 @@ def parte_txt(valor: float, total: float) -> str:
 
 
 def blocos(fato: str, interpretacao: str, hipotese: str) -> str:
-    return (f'<div class="fih"><div class="b fato"><h3>Fato</h3>{fato}</div>'
-            f'<div class="b interp"><h3>Interpretação</h3>{interpretacao}</div>'
-            f'<div class="b hipo"><h3>Hipótese</h3>{hipotese}</div></div>')
+    return (f'<div class="fih" lang="pt-BR"><div class="b fato" lang="pt-BR"><h3>Fato</h3>{fato}</div>'
+            f'<div class="b interp" lang="pt-BR"><h3>Interpretação</h3>{interpretacao}</div>'
+            f'<div class="b hipo" lang="pt-BR"><h3>Hipótese</h3>{hipotese}</div></div>')
 
 
 def tabela_bruta(cabecalho: list[str], linhas: list[list[str]], legenda: str, aberta: bool = False) -> str:
@@ -268,14 +268,16 @@ def fig_indice(indice: pd.DataFrame, rotulos: list[str]) -> go.Figure:
     df = indice[manter].iloc[::-1]
     y = [r for r, ok in zip(rotulos, manter) if ok][::-1]
     fig = go.Figure()
+    # Ordem fixa das cores em todas as linhas: rotatividade, saída em 90 dias, absenteísmo.
+    # Componente fora da conta entra como 0 só no desenho (o cálculo do índice não muda); com valor vazio,
+    # o plotly deixa de empilhar a barra e o fim dela deixa de bater com o índice.
     for comp, nome, cor in [("rotatividade_12m", "Rotatividade 12 meses", VERDE),
                             ("saida_90_dias", "Saída em 90 dias", DOURADO),
                             ("absenteismo_6m", "Absenteísmo 6 meses", VERDE_MEDIO)]:
-        fig.add_bar(y=y, x=df[f"contrib_{comp}"], orientation="h", name=nome, marker_color=cor,
-                    marker_line_color="#FFFFFF", marker_line_width=1,
-                    customdata=df[[f"comp_{comp}"]].values,
-                    hovertemplate="%{y}<br>" + nome + ": contribuição %{x:.2f}<br>"
-                                  "componente %{customdata[0]:.2f}<extra></extra>")
+        situacao = ["fora da conta (base insuficiente)" if pd.isna(c) else f"componente {num(c, 2)}" for c in df[f"comp_{comp}"]]
+        fig.add_bar(y=y, x=df[f"contrib_{comp}"].fillna(0.0), orientation="h", name=nome, marker_color=cor,
+                    marker_line_color="#FFFFFF", marker_line_width=1, customdata=situacao,
+                    hovertemplate="%{y}<br>" + nome + ": contribuição %{x:.2f}<br>%{customdata}<extra></extra>")
     fig.add_scatter(y=y, x=df["indice"], mode="text", text=[num(v, 2) for v in df["indice"]],
                     textposition="middle right", textfont=dict(color=TINTA, size=13), showlegend=False,
                     hoverinfo="skip")
@@ -291,6 +293,7 @@ def gerar(raiz: Path) -> Path:
     global BASE_MINIMA
     premissas = m.carregar_premissas(raiz / "config" / "premissas.toml")
     BASE_MINIMA = int(premissas["relatorio"]["base_minima"])
+    base_pequena = int(premissas["relatorio"]["base_pequena"])
     pessoas, faltas = m.carregar_dados(raiz / "dados")
     meses = m.meses_do_periodo(premissas["periodo"]["inicio"], premissas["periodo"]["meses"])
     inicio, fim = meses[0].start_time.normalize(), meses[-1].end_time.normalize()
@@ -374,7 +377,11 @@ def gerar(raiz: Path) -> Path:
     pi = premissas["indice"]
     indice_eq = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, equipe), pi, BASE_MINIMA)
     indice_area = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, ["area"]), pi, BASE_MINIMA)
-    rotulos_indice = [rotulo_equipe(r) for _, r in indice_eq.iterrows()]
+    def eh_base_pequena(r):
+        # menos de base_pequena pessoas no grupo, ou menos de base_pequena admissões no componente dos 90 dias
+        return bool(r["pessoas_12m"] < base_pequena or r["admitidos_90_dias"] < base_pequena)
+
+    rotulos_indice = [rotulo_equipe(r) + (" (base pequena)" if eh_base_pequena(r) else "") for _, r in indice_eq.iterrows()]
     nomes_comp = {"rotatividade_12m": "rotatividade dos últimos 12 meses", "saida_90_dias": "saída nos primeiros 90 dias",
                   "absenteismo_6m": "absenteísmo dos últimos 6 meses"}
     nomes_comp_curto = {"rotatividade_12m": "Rotatividade", "saida_90_dias": "Saída em 90 dias", "absenteismo_6m": "Absenteísmo"}
@@ -408,6 +415,7 @@ def gerar(raiz: Path) -> Path:
             if r["base_insuficiente"]:
                 corpo.append(f"<tr><td>{rot}</td><td>{num(r['pessoas_12m'])}</td>" + "<td>base insuficiente</td>" * 4 + "</tr>")
                 continue
+            grupo = rot + ('<br><span class="marca base-pequena">base pequena</span>' if eh_base_pequena(r) else "")
             celulas = []
             for comp in m.COMPONENTES:
                 curto = "fora" if pd.isna(r[f"contrib_{comp}"]) else num(r[f"contrib_{comp}"], 2)
@@ -418,7 +426,7 @@ def gerar(raiz: Path) -> Path:
                      else f'<br><span class="marca"><span class="cel-completa">índice com {n_comp} de {len(m.COMPONENTES)} componentes</span>'
                           f'<span class="cel-curta">{n_comp} de {len(m.COMPONENTES)}</span></span>')
             idx = f"<strong>{num(r['indice'], 2)}</strong>{marca}"
-            corpo.append(f"<tr><td>{rot}</td><td>{num(r['pessoas_12m'])}</td>{''.join(celulas)}<td>{idx}</td></tr>")
+            corpo.append(f"<tr><td>{grupo}</td><td>{num(r['pessoas_12m'])}</td>{''.join(celulas)}<td>{idx}</td></tr>")
             detalhe = "".join(f"<li><strong>{nomes_comp_curto[c]}:</strong> {html.escape(valor_comp(r, c))}; {conta_comp(r, c)}.</li>"
                               for c in m.COMPONENTES)
             corpo.append(f'<tr class="linha-conta"><td colspan="6"><details><summary>Ver a conta de {rot}</summary>'
@@ -435,6 +443,21 @@ def gerar(raiz: Path) -> Path:
     sem_indice = indice_eq[indice_eq["base_insuficiente"]]
     parciais = eq_ok[eq_ok["componentes_usados"] < len(m.COMPONENTES)]
 
+    # Exemplo de base pequena: a equipe do topo do ranking com menos de base_pequena admissões, e o que uma saída a menos faria
+    exemplo_txt = ""
+    for pos, (idx_linha, r) in reversed(list(enumerate(eq_ok.head(3).iterrows(), 1))):
+        if (r["componentes_usados"] == len(m.COMPONENTES) and r["admitidos_90_dias"] < base_pequena
+                and r["sairam_90_dias"] > 0):
+            novo_comp = min((r["sairam_90_dias"] - 1) / r["admitidos_90_dias"] / pi["referencia_saida_90_dias"], 1.0)
+            novo = r["indice"] - r["peso_saida_90_dias"] * (r["comp_saida_90_dias"] - novo_comp)
+            nova_pos = 1 + int((eq_ok.drop(index=idx_linha)["indice"] > novo).sum())
+            exemplo_txt = (f"Exemplo da base: {html.escape(rotulo_equipe(r))} está em {pos}º lugar com "
+                           f"{int(r['sairam_90_dias'])} saídas em {int(r['admitidos_90_dias'])} admissões nos primeiros 90 dias. "
+                           f"Com uma saída a menos, o componente dos 90 dias cairia de {num(r['comp_saida_90_dias'], 2)} para "
+                           f"{num(novo_comp, 2)}, o índice de {num(r['indice'], 2)} para {num(novo, 2)}, e a equipe passaria "
+                           f"para o {nova_pos}º lugar.")
+            break
+
     # ------------------------------------------------------------ tabelas
     tab_mensal = tabela_bruta(
         ["Mês", "Admissões", "Pedidos de demissão", "Desligamentos pela empresa", "Quadro no fim do mês", "Saídas no mês"],
@@ -450,7 +473,7 @@ def gerar(raiz: Path) -> Path:
             linhas.append([html.escape(rot), num(r["pessoas"]), num(r["saidas_pedido"]), num(r["saidas_empresa"]),
                            html.escape(fracao(r["saidas_pedido"], r["saidas"])),
                            html.escape(taxa_ano(r["taxa_anual"], r["saidas"], r["quadro_medio"], r["pessoas"]))])
-        return tabela_bruta([titulo, "Pessoas no período", "Pedidos", "Pela empresa", "Parte por pedido", "Rotatividade"],
+        return tabela_bruta([titulo, "Pessoas no período", "Pedido de demissão", "Desligamento pela empresa", "Parte por pedido", "Rotatividade"],
                             linhas, legenda)
 
     tab_unid = tabela_grupos(anual_unid, "unidade", "Unidade", "Ver por unidade")
@@ -563,9 +586,11 @@ def gerar(raiz: Path) -> Path:
     <li>Quem ficou, nos mesmos meses do calendário, faltou {falta_txt(fd['faltas'], fd['dias'], fd['pessoas'])}.</li>
     <li>Antes de um pedido de demissão, {falta_txt(tp['saiu']['faltas'], tp['saiu']['dias'], tp['saiu']['pessoas'])}.</li>
     </ul>"""
-    p3_interp = """<p>A falta sobe perto da saída e é mais alta antes de um pedido de demissão. Na tabela mês a mês, longe da saída,
-    as mesmas pessoas faltavam num nível parecido com o de quem ficou, então a alta não parece um traço antigo. Na tabela por equipe,
-    o absenteísmo se concentra em uma equipe, o que sugere um fator de grupo além do individual.</p>"""
+    p3_interp = f"""<p>A falta sobe perto da saída e é mais alta antes de um pedido de demissão. Na tabela mês a mês, longe da saída,
+    as mesmas pessoas faltavam num nível parecido com o de quem ficou, então a alta não parece um traço antigo. O absenteísmo também
+    se concentra na equipe {html.escape(rotulo_equipe(lider_abs))}: {falta_txt(lider_abs['faltas'], lider_abs['dias_previstos'], pessoas_lider_abs)}
+    em 24 meses, contra {falta_txt(resto_abs['faltas'], resto_abs['dias_previstos'], BASE_MINIMA)} no resto da rede, o que sugere um
+    fator de grupo além do individual.</p>"""
     p3_hipo = """<p>Este padrão foi plantado no gerador, então aqui ele confirma o método, não descobre nada. Em dados reais seria preciso
     verificar se a alta de faltas antecede a decisão de sair ou é consequência dela, e que parte das faltas tem motivo de saúde.
     O motivo da falta não está na base de propósito, porque pode revelar dado de saúde: essa verificação seria feita em conversa, com
@@ -727,6 +752,10 @@ def gerar(raiz: Path) -> Path:
   <div class="grafico">{g_indice}</div>
   {tab_indice_eq}
   {tab_indice_area}
+  <p class="legenda">Valores arredondados; o índice usa os valores exatos.</p>
+  <p><strong>Base pequena.</strong> Grupos com menos de {base_pequena} pessoas nos últimos 12 meses, ou com menos de {base_pequena}
+  admissões no componente dos 90 dias, levam a marcação "base pequena" na tabela e no gráfico. Nesses grupos, 1 ou 2 eventos mudam
+  a posição no ranking. {exemplo_txt}</p>
   {blocos(p5_fato, p5_interp, p5_hipo)}
 </section>
 
@@ -743,6 +772,8 @@ def gerar(raiz: Path) -> Path:
   sindical, vida sexual, dados genéticos ou biométricos (Lei 13.709/2018, art. 5º, II), nem nome, gênero, idade ou salário
   individual: não são necessários para as cinco perguntas, e a lei pede só o mínimo necessário para a finalidade (art. 6º, III).
   As faltas estão sem motivo, porque o motivo pode revelar saúde.</p>
+  <p><strong>O índice por líder não avalia o líder.</strong> Ele não é avaliação de desempenho de quem lidera a equipe: indica onde
+  ouvir primeiro, e a liderança participa da leitura dos números antes de qualquer decisão.</p>
   <p><strong>Limites de uso.</strong> O índice serve para abrir conversa com a liderança e orientar ações de retenção. Não deve ser
   usado para avaliação de desempenho, punição, nem decisão sobre uma pessoa específica, inclusive sobre líderes. Faltas entram
   como sinal do grupo; em nenhum caso o índice deve ser usado para cobrar presença de uma pessoa ou questionar atestado. Em uma empresa
@@ -849,6 +880,10 @@ footer a {{ color: var(--verde); }}
 .fih ul {{ padding-left: 1.1rem; margin: 0; }}
 .fih li {{ margin: .3rem 0; }}
 .fih p {{ margin: 0; }}
+/* cartões: texto justificado e hifenização em português (só palavras longas), para não abrir espaços grandes */
+.fih p, .fih li {{ text-align: justify; hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 10 4 4;
+  -webkit-hyphenate-limit-before: 4; -webkit-hyphenate-limit-after: 4; }}
+.base-pequena {{ color: var(--vermelho); }}
 .conta {{ font-size: .85rem; color: var(--cinza); }}
 .marca {{ font-size: .8rem; color: var(--cinza); font-weight: 400; }}
 /* Tabela do índice: no computador, valor e conta em cada célula; até 600 px, só as contribuições e a conta numa linha expansível */
