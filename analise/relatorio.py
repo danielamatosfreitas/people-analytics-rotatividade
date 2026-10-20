@@ -358,7 +358,6 @@ def gerar(raiz: Path) -> Path:
     pessoas_lider_abs = int(lider_abs["pessoas"])
     resto = faltas[~faltas["id"].isin(pessoas.loc[pessoas["lider"] == lider_abs["lider"], "id"])]
     resto_abs = m.absenteismo(resto).iloc[0]
-    razao_faltas = fa["saiu"] / fa["ficou"]
 
     # ------------------------------------------------------------ 4. Custo
     pc = premissas["custo"]
@@ -373,44 +372,68 @@ def gerar(raiz: Path) -> Path:
 
     # ------------------------------------------------------------ 5. Índice
     pi = premissas["indice"]
-    rede = m.fatores_por_grupo(pessoas, faltas, meses, None).iloc[0].to_dict()
-    indice_eq = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, equipe), rede, pi, BASE_MINIMA)
-    indice_area = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, ["area"]), rede, pi, BASE_MINIMA)
+    indice_eq = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, equipe), pi, BASE_MINIMA)
+    indice_area = m.indice_risco(m.fatores_por_grupo(pessoas, faltas, meses, ["area"]), pi, BASE_MINIMA)
     rotulos_indice = [rotulo_equipe(r) for _, r in indice_eq.iterrows()]
     nomes_comp = {"rotatividade_12m": "rotatividade dos últimos 12 meses", "saida_90_dias": "saída nos primeiros 90 dias",
                   "absenteismo_6m": "absenteísmo dos últimos 6 meses"}
+    nomes_comp_curto = {"rotatividade_12m": "Rotatividade", "saida_90_dias": "Saída em 90 dias", "absenteismo_6m": "Absenteísmo"}
 
     def maior_contrib(linha):
-        return max(m.COMPONENTES, key=lambda c: linha[f"contrib_{c}"])
+        return max(m.COMPONENTES, key=lambda c: -1 if pd.isna(linha[f"contrib_{c}"]) else linha[f"contrib_{c}"])
 
-    def celula_comp(linha, comp):
-        peso = pi[m.COMPONENTES[comp][0]]
+    def valor_comp(linha, comp):
         if comp == "rotatividade_12m":
-            valor = taxa_ano(linha["rotatividade_12m"], linha["saidas_12m"], linha["quadro_medio_12m"], linha["pessoas_12m"])
-        elif comp == "saida_90_dias":
-            valor = (f"base insuficiente ({int(linha['admitidos_90_dias'])} admissões): usa a taxa da rede"
-                     if linha["usa_rede_90_dias"] else fracao(linha["sairam_90_dias"], linha["admitidos_90_dias"]))
-        else:
-            valor = falta_txt(linha["faltas_6m"], linha["dias_previstos_6m"], linha["pessoas_12m"])
-        if linha["base_insuficiente"]:
-            return "base insuficiente"
-        return (f"{html.escape(valor)}<br><span class='conta'>componente {num(linha[f'comp_{comp}'], 2)} × peso "
-                f"{num(peso, 2)} = {num(linha[f'contrib_{comp}'], 2)}</span>")
+            return taxa_ano(linha["rotatividade_12m"], linha["saidas_12m"], linha["quadro_medio_12m"], linha["pessoas_12m"])
+        if comp == "saida_90_dias":
+            return fracao(linha["sairam_90_dias"], linha["admitidos_90_dias"])
+        return falta_txt(linha["faltas_6m"], linha["dias_previstos_6m"], linha["pessoas_12m"])
 
-    def linhas_indice(df, chave):
-        out = []
+    def conta_comp(linha, comp):
+        """Texto da conta de um componente; componente sem base fica fora, sem valor imputado."""
+        if pd.isna(linha[f"contrib_{comp}"]):
+            return "fora da conta (base insuficiente)"
+        return (f"componente {num(linha[f'comp_{comp}'], 2)} × peso {num(linha[f'peso_{comp}'], 2)} "
+                f"= {num(linha[f'contrib_{comp}'], 2)}")
+
+    def tabela_indice(df, chave, legenda, aberta=False):
+        """No computador, cada célula traz o valor e a conta. Até 600 px, só as contribuições e o índice;
+        a conta completa fica numa linha expansível logo abaixo do grupo."""
+        # cabeçalho completo no computador e curto até 600 px
+        cab = [("Grupo", "Grupo"), ("Pessoas (12 meses)", "Pessoas"), ("Rotatividade 12 meses", "Rotatividade"),
+               ("Saída em 90 dias", "90 dias"), ("Absenteísmo 6 meses", "Faltas"), ("Índice", "Índice")]
+        corpo = []
         for _, r in df.iterrows():
             rot = html.escape(rotulo_equipe(r) if chave == "equipe" else r["area"])
-            idx = "base insuficiente" if r["base_insuficiente"] else f"<strong>{num(r['indice'], 2)}</strong>"
-            out.append([rot, num(r["pessoas_12m"]), celula_comp(r, "rotatividade_12m"), celula_comp(r, "saida_90_dias"),
-                        celula_comp(r, "absenteismo_6m"), idx])
-        return out
+            if r["base_insuficiente"]:
+                corpo.append(f"<tr><td>{rot}</td><td>{num(r['pessoas_12m'])}</td>" + "<td>base insuficiente</td>" * 4 + "</tr>")
+                continue
+            celulas = []
+            for comp in m.COMPONENTES:
+                curto = "fora" if pd.isna(r[f"contrib_{comp}"]) else num(r[f"contrib_{comp}"], 2)
+                celulas.append(f'<td><span class="cel-completa">{html.escape(valor_comp(r, comp))}<br>'
+                               f'<span class="conta">{conta_comp(r, comp)}</span></span><span class="cel-curta">{curto}</span></td>')
+            n_comp = int(r["componentes_usados"])
+            marca = ("" if n_comp == len(m.COMPONENTES)
+                     else f'<br><span class="marca"><span class="cel-completa">índice com {n_comp} de {len(m.COMPONENTES)} componentes</span>'
+                          f'<span class="cel-curta">{n_comp} de {len(m.COMPONENTES)}</span></span>')
+            idx = f"<strong>{num(r['indice'], 2)}</strong>{marca}"
+            corpo.append(f"<tr><td>{rot}</td><td>{num(r['pessoas_12m'])}</td>{''.join(celulas)}<td>{idx}</td></tr>")
+            detalhe = "".join(f"<li><strong>{nomes_comp_curto[c]}:</strong> {html.escape(valor_comp(r, c))}; {conta_comp(r, c)}.</li>"
+                              for c in m.COMPONENTES)
+            corpo.append(f'<tr class="linha-conta"><td colspan="6"><details><summary>Ver a conta de {rot}</summary>'
+                         f'<ul>{detalhe}</ul></details></td></tr>')
+        cabecalho = "".join(f'<th><span class="cel-completa">{html.escape(longo)}</span><span class="cel-curta">{html.escape(curto)}</span></th>'
+                            for longo, curto in cab)
+        return (f'<details class="tabela"{" open" if aberta else ""}><summary>{html.escape(legenda)}</summary>'
+                f'<div class="rolagem"><table class="tab-indice"><thead><tr>{cabecalho}</tr></thead>'
+                f'<tbody>{"".join(corpo)}</tbody></table></div></details>')
 
     eq_ok = indice_eq[~indice_eq["base_insuficiente"]]
     top3 = eq_ok.head(3)
     area_ok = indice_area[~indice_area["base_insuficiente"]]
     sem_indice = indice_eq[indice_eq["base_insuficiente"]]
-    usa_rede = indice_eq[indice_eq["usa_rede_90_dias"] & ~indice_eq["base_insuficiente"]]
+    parciais = eq_ok[eq_ok["componentes_usados"] < len(m.COMPONENTES)]
 
     # ------------------------------------------------------------ tabelas
     tab_mensal = tabela_bruta(
@@ -494,13 +517,12 @@ def gerar(raiz: Path) -> Path:
         [["Rotatividade dos últimos 12 meses", num(pi["peso_rotatividade_12m"], 2), num(pi["referencia_rotatividade_12m"], 2) + " saída por pessoa do quadro médio, ao ano",
           "Saídas sobre o quadro médio, ajustadas para 12 meses."],
          ["Saída nos primeiros 90 dias", num(pi["peso_saida_90_dias"], 2), num(pi["referencia_saida_90_dias"], 2) + " dos admitidos",
-          f"Admitidos nos 24 meses que saíram antes de 90 dias. Com menos de {BASE_MINIMA} admissões, usa a taxa da rede."],
+          f"Admitidos nos 24 meses que saíram antes de 90 dias. Com menos de {BASE_MINIMA} admissões, sai da conta (sem valor imputado)."],
          ["Absenteísmo dos últimos 6 meses", num(pi["peso_absenteismo_6m"], 2), num(pi["referencia_absenteismo_6m"], 2) + " dos dias previstos",
           "Dias de falta sobre dias de trabalho previstos."]],
         "Pesos e referências do índice", aberta=True)
-    cab_indice = ["Grupo", "Pessoas (12 meses)", "Rotatividade 12 meses", "Saída em 90 dias", "Absenteísmo 6 meses", "Índice"]
-    tab_indice_eq = tabela_bruta(cab_indice, linhas_indice(indice_eq, "equipe"), "Índice por líder: cada componente e sua contribuição", aberta=True)
-    tab_indice_area = tabela_bruta(cab_indice, linhas_indice(indice_area, "area"), "Índice por área: cada componente e sua contribuição")
+    tab_indice_eq = tabela_indice(indice_eq, "equipe", "Índice por líder: cada componente e sua contribuição", aberta=True)
+    tab_indice_area = tabela_indice(indice_area, "area", "Índice por área: cada componente e sua contribuição")
 
     # ------------------------------------------------------------ gráficos
     g_mensal = grafico_html(fig_mensal(mensal), "g-mensal", carregar_plotly=True)
@@ -513,18 +535,11 @@ def gerar(raiz: Path) -> Path:
 
     # ------------------------------------------------------------ textos das perguntas
     p1_fato = f"""<ul>
-    <li>Em {len(meses)} meses passaram pela rede {n_pessoas} pessoas e saíram {saidas}: {fracao(n_pedido, saidas)} por pedido de
-    demissão e {fracao(n_empresa, saidas)} por desligamento pela empresa. A rotatividade foi de
-    {taxa_ano(total['taxa_anual'], saidas, total['quadro_medio'], n_pessoas)}; nos últimos 12 meses, {pct(rot_12m['taxa_anual'])} ao ano
-    ({int(rot_12m['saidas'])} saídas, quadro médio de {num(rot_12m['quadro_medio'], 1)}).</li>
-    <li>Por área: {lista_taxas(area_ord, 'area')}.</li>
-    <li>Por unidade: {lista_taxas(unid_ord, 'unidade')}.</li>
-    <li>Pedido de demissão por área: {lista_tipos(area_ord, 'area')}.</li>
-    <li>Meses com mais saídas: {mes_longo(picos.iloc[0]['mes'])} ({int(picos.iloc[0]['saidas'])}) e {mes_longo(picos.iloc[1]['mes'])}
-    ({int(picos.iloc[1]['saidas'])}). De janeiro a março saíram {saidas_tri} pessoas em {meses_tri} meses ({num(media_tri, 1)} por mês);
-    nos outros {meses_resto} meses, {saidas_resto} ({num(media_resto, 1)} por mês).</li>
+    <li>{fracao(n_pedido, saidas)} das saídas foram pedidos de demissão.</li>
+    <li>{area_top['area']} tem a maior rotatividade entre as áreas: {taxa_ano(area_top['taxa_anual'], area_top['saidas'], area_top['quadro_medio'], area_top['pessoas'])}.</li>
+    <li>{unid_ord.iloc[0]['unidade']} tem a maior entre as unidades: {taxa_ano(unid_ord.iloc[0]['taxa_anual'], unid_ord.iloc[0]['saidas'], unid_ord.iloc[0]['quadro_medio'], unid_ord.iloc[0]['pessoas'])}.</li>
     </ul>"""
-    p1_interp = f"""<p>{area_top['area']} concentra a maior rotatividade da rede{", e os pedidos de demissão são a maior parte das saídas, o que aponta mais para decisões de quem trabalha do que para cortes" if n_pedido > n_empresa else ""}. {"O começo do ano pesa mais: é o padrão do comércio, em que parte das pessoas espera passar o fim de ano para sair." if media_tri > 1.2 * media_resto else "Não há uma época do ano claramente mais pesada."}
+    p1_interp = f"""<p>{area_top['area']} concentra a maior rotatividade da rede{", e os pedidos de demissão são a maior parte das saídas, o que aponta mais para decisões de quem trabalha do que para cortes" if n_pedido > n_empresa else ""}. {"No gráfico mensal, o começo do ano pesa mais: é o padrão do comércio, em que parte das pessoas espera passar o fim de ano para sair." if media_tri > 1.2 * media_resto else "Não há uma época do ano claramente mais pesada."}
     Em equipes pequenas, duas ou três saídas já mudam muito a taxa, então a leitura por equipe vale como sinal para investigar.</p>"""
     p1_hipo = f"""<p>Na vida real seria preciso verificar: se as saídas do começo do ano vêm de quem espera o 13º e as festas
     (entrevista de desligamento com as mesmas perguntas para todos); se a rotatividade de {area_top['area']} acompanha meta, comissão e escala;
@@ -532,13 +547,9 @@ def gerar(raiz: Path) -> Path:
 
     a90_nome = a90_top["area"]
     p2_fato = f"""<ul>
-    <li>Dos admitidos no período que já completariam 90 dias, {fracao(s90_rede['sairam_90_dias'], s90_rede['admitidos'])} saíram
-    antes disso.</li>
-    <li>Essas saídas na experiência são {fracao(n_saidas_90, saidas)} de todas as saídas da rede.</li>
-    <li>Por área: {lista([f"{r['area']}, {fracao(r['sairam_90_dias'], r['admitidos'])}" for _, r in s90_area.sort_values('taxa_90_dias', ascending=False).iterrows()])}.</li>
-    <li>Em {a90_nome}, as saídas antes de 90 dias são {fracao(n_saidas_90_area, saidas_periodo[saidas_periodo['area'] == a90_nome].shape[0])}
-    das saídas da área. Nas outras áreas somadas, {fracao(outras['sairam_90_dias'].sum(), outras['admitidos'].sum())} dos admitidos saem
-    na experiência.</li>
+    <li>Na rede, {fracao(s90_rede['sairam_90_dias'], s90_rede['admitidos'])} dos admitidos saíram antes de 90 dias.</li>
+    <li>Em {a90_nome}, {fracao(a90_top['sairam_90_dias'], a90_top['admitidos'])}.</li>
+    <li>As saídas na experiência são {fracao(n_saidas_90, saidas)} de todas as saídas.</li>
     </ul>"""
     p2_interp = f"""<p>{a90_nome} perde gente cedo: a taxa de saída na experiência fica acima da rede em {acima_rede} das
     {len(eq_area_top)} equipes da área com base suficiente. Quando o problema se repete com líderes diferentes, a explicação mais
@@ -548,22 +559,13 @@ def gerar(raiz: Path) -> Path:
     período são decisão do líder ou da pessoa. Equipes com menos de {BASE_MINIMA} admissões aparecem como base insuficiente.</p>"""
 
     p3_fato = f"""<ul>
-    <li>Nos 3 meses antes da saída, quem saiu ({sd['pessoas']} pessoas) faltou {falta_txt(sd['faltas'], sd['dias'], sd['pessoas'])}.</li>
-    <li>Grupo de comparação: quem ficou ({fd['pessoas']} pessoas), nos mesmos meses do calendário, faltou
-    {falta_txt(fd['faltas'], fd['dias'], fd['pessoas'])}. A diferença é de {vezes(razao_faltas)}.</li>
-    <li>Por tipo de saída: antes de um pedido de demissão ({tp['saiu']['pessoas']} pessoas),
-    {falta_txt(tp['saiu']['faltas'], tp['saiu']['dias'], tp['saiu']['pessoas'])}, contra
-    {falta_txt(tp['ficou']['faltas'], tp['ficou']['dias'], tp['ficou']['pessoas'])} de quem ficou; antes de um desligamento pela
-    empresa ({te['saiu']['pessoas']} pessoas), {falta_txt(te['saiu']['faltas'], te['saiu']['dias'], te['saiu']['pessoas'])}, contra
-    {falta_txt(te['ficou']['faltas'], te['ficou']['dias'], te['ficou']['pessoas'])}.</li>
-    <li>Entre 4 e 12 meses antes da saída, as mesmas pessoas faltavam
-    {falta_txt(antes['faltas'].sum(), antes['dias_previstos'].sum(), int(antes['pessoas'].max()) if len(antes) else 0)}.</li>
-    <li>Por equipe, {rotulo_equipe(lider_abs)} tem absenteísmo de {falta_txt(lider_abs['faltas'], lider_abs['dias_previstos'], pessoas_lider_abs)}
-    em 24 meses; o resto da rede, {falta_txt(resto_abs['faltas'], resto_abs['dias_previstos'], BASE_MINIMA)}.</li>
+    <li>Nos 3 meses antes da saída, quem saiu faltou {falta_txt(sd['faltas'], sd['dias'], sd['pessoas'])}.</li>
+    <li>Quem ficou, nos mesmos meses do calendário, faltou {falta_txt(fd['faltas'], fd['dias'], fd['pessoas'])}.</li>
+    <li>Antes de um pedido de demissão, {falta_txt(tp['saiu']['faltas'], tp['saiu']['dias'], tp['saiu']['pessoas'])}.</li>
     </ul>"""
-    p3_interp = """<p>A falta sobe perto da saída e é mais alta antes de um pedido de demissão do que antes de um desligamento pela
-    empresa. Longe da saída, as mesmas pessoas faltavam num nível parecido com o de quem ficou, então a alta não parece um traço antigo.
-    O absenteísmo também se concentra em uma equipe, o que sugere um fator de grupo além do individual.</p>"""
+    p3_interp = """<p>A falta sobe perto da saída e é mais alta antes de um pedido de demissão. Na tabela mês a mês, longe da saída,
+    as mesmas pessoas faltavam num nível parecido com o de quem ficou, então a alta não parece um traço antigo. Na tabela por equipe,
+    o absenteísmo se concentra em uma equipe, o que sugere um fator de grupo além do individual.</p>"""
     p3_hipo = """<p>Este padrão foi plantado no gerador, então aqui ele confirma o método, não descobre nada. Em dados reais seria preciso
     verificar se a alta de faltas antecede a decisão de sair ou é consequência dela, e que parte das faltas tem motivo de saúde.
     O motivo da falta não está na base de propósito, porque pode revelar dado de saúde: essa verificação seria feita em conversa, com
@@ -571,34 +573,28 @@ def gerar(raiz: Path) -> Path:
 
     s_b, s_m, s_a = sens.loc["baixo"], sens.loc["medio"], sens.loc["alto"]
     p4_fato = f"""<ul>
-    <li>Cenário médio: {reais_mil(s_m['total'])} em 24 meses, {saidas} saídas, {reais(s_m['por_saida'])} por saída
-    (cerca de {reais_mil(s_m['total'] / len(meses) * 12)} por ano).</li>
-    <li>Sensibilidade: {reais_mil(s_b['total'])} no cenário baixo ({reais(s_b['por_saida'])} por saída) e {reais_mil(s_a['total'])} no
-    alto ({reais(s_a['por_saida'])} por saída).</li>
-    <li>No cenário médio, {nomes_partes[partes.index[0]]} responde por {parte_txt(partes.iloc[0], custo_total)},
-    {nomes_partes[partes.index[1]]} por {parte_txt(partes.iloc[1], custo_total)} e {nomes_partes[partes.index[2]]} por
-    {parte_txt(partes.iloc[2], custo_total)}.</li>
-    <li>Saídas antes de 90 dias custaram {parte_txt(custo_90, custo_total)}. {por_area_custo.index[0]} concentra
-    {parte_txt(por_area_custo.iloc[0], custo_total)}.</li>
+    <li>Cenário médio: {reais_mil(s_m['total'])} em 24 meses.</li>
+    <li>Cenário baixo: {reais_mil(s_b['total'])}.</li>
+    <li>Cenário alto: {reais_mil(s_a['total'])}.</li>
     </ul>"""
-    p4_interp = f"""<p>Mesmo no cenário baixo o custo fica em {reais_mil(s_b['total'])}, e a maior parte não aparece em nenhuma linha da
+    p4_interp = f"""<p>Mesmo no cenário baixo o custo é alto, e a maior parte não aparece em nenhuma linha da
     contabilidade com esse nome: está no tempo em que a pessoa nova ainda não rende e nas horas de recrutar e treinar. A rescisão
     não muda entre os cenários, porque segue a lei; o que move o total são as premissas de reposição e de aprendizado.</p>"""
     p4_hipo = """<p>Seria preciso trocar as premissas pelos números reais da empresa: encargos do regime tributário, custo de
     cada processo seletivo, horas de treino e a curva de aprendizado de cada função (medida, por exemplo, por vendas ou itens por
     hora no primeiro trimestre). Ficam de fora vendas perdidas com a vaga aberta, horas extras de quem cobre e efeito no clima.</p>"""
 
-    top_txt = "".join(
-        f"<li>{html.escape(rotulo_equipe(r))}: índice {num(r['indice'], 2)}. Maior contribuição: {nomes_comp[maior_contrib(r)]} "
-        f"({num(r['contrib_' + maior_contrib(r)], 2)} de {num(r['indice'], 2)}).</li>" for _, r in top3.iterrows())
-    p5_fato = f"""<ul>{top_txt}
-    <li>Por área: {lista([f"{r['area']} ({num(r['indice'], 2)})" for _, r in area_ok.iterrows()])}.</li>
-    <li>{len(eq_ok)} das {len(indice_eq)} equipes têm base suficiente para receber índice{f"; {lista(sem_indice['lider'].tolist())} não recebe(m)" if len(sem_indice) else ""}.
-    {f"Em {len(usa_rede)} equipes, o componente dos 90 dias usa a taxa da rede, por terem menos de {BASE_MINIMA} admissões." if len(usa_rede) else ""}</li>
-    </ul>"""
-    p5_interp = f"""<p>O índice soma três componentes de 0 a 1 com pesos fixos e declarados, e a tabela mostra a conta de cada linha.
-    A equipe {html.escape(rotulo_equipe(top3.iloc[0]))} aparece primeiro, puxada por {nomes_comp[maior_contrib(top3.iloc[0])]}. O índice
-    mostra onde começar uma conversa; ele não prevê quem vai sair e não olha para pessoas.</p>"""
+    def marca_parcial(r):
+        n = int(r["componentes_usados"])
+        return "" if n == len(m.COMPONENTES) else f" (índice com {n} de {len(m.COMPONENTES)} componentes)"
+
+    top_txt = "".join(f"<li>{html.escape(rotulo_equipe(r))}: {num(r['indice'], 2)}{marca_parcial(r)}.</li>" for _, r in top3.iterrows())
+    p5_fato = f"""<ul>{top_txt}</ul>"""
+    primeiro = top3.iloc[0]
+    p5_interp = f"""<p>A equipe {html.escape(rotulo_equipe(primeiro))} aparece primeiro, puxada por {nomes_comp[maior_contrib(primeiro)]};
+    a segunda, por {nomes_comp[maior_contrib(top3.iloc[1])]}; a terceira, por {nomes_comp[maior_contrib(top3.iloc[2])]}.
+    {f"Nas equipes com menos de {BASE_MINIMA} admissões, o componente dos 90 dias fica fora da conta e o índice usa só os outros dois, com os pesos redistribuídos; a marcação aparece na tabela." if len(parciais) else ""}
+    O índice mostra onde começar uma conversa; ele não prevê quem vai sair e não olha para pessoas.</p>"""
     p5_hipo = """<p>Seria preciso ouvir cada liderança antes de qualquer ação: mudança de escala, reforma, troca de gestor ou
     mercado aquecido aparecem só na conversa. Os pesos e as referências são uma escolha; quem discordar pode trocá-los em
     <code>config/premissas.toml</code> e ver se a ordem das equipes muda. Vale recalcular a cada trimestre.</p>"""
@@ -722,7 +718,11 @@ def gerar(raiz: Path) -> Path:
   <h2>Onde abrir a conversa primeiro?</h2>
   <p>Índice por área e por líder, de 0 a 1. Cada componente é o valor do grupo dividido por uma referência, com teto em 1;
   a contribuição é o componente vezes o peso; o índice é a soma das contribuições. Não há modelo de previsão nem rótulo de pessoa.
-  Grupo com menos de {BASE_MINIMA} pessoas nos últimos 12 meses não recebe índice.</p>
+  Grupo com menos de {BASE_MINIMA} pessoas nos últimos 12 meses não recebe índice. Componente sem base suficiente (menos de
+  {BASE_MINIMA} admissões, no caso dos 90 dias) sai da conta, sem valor imputado, e os pesos dos outros são redistribuídos na mesma
+  proporção ({num(pi['peso_rotatividade_12m'], 2)} e {num(pi['peso_absenteismo_6m'], 2)} viram
+  {num(pi['peso_rotatividade_12m'] / (1 - pi['peso_saida_90_dias']), 2)} e {num(pi['peso_absenteismo_6m'] / (1 - pi['peso_saida_90_dias']), 2)});
+  a linha recebe a marcação "índice com 2 de 3 componentes".</p>
   {tab_pesos}
   <div class="grafico">{g_indice}</div>
   {tab_indice_eq}
@@ -744,7 +744,8 @@ def gerar(raiz: Path) -> Path:
   individual: não são necessários para as cinco perguntas, e a lei pede só o mínimo necessário para a finalidade (art. 6º, III).
   As faltas estão sem motivo, porque o motivo pode revelar saúde.</p>
   <p><strong>Limites de uso.</strong> O índice serve para abrir conversa com a liderança e orientar ações de retenção. Não deve ser
-  usado para avaliação de desempenho, punição, nem decisão sobre uma pessoa específica, inclusive sobre líderes. Em uma empresa
+  usado para avaliação de desempenho, punição, nem decisão sobre uma pessoa específica, inclusive sobre líderes. Faltas entram
+  como sinal do grupo; em nenhum caso o índice deve ser usado para cobrar presença de uma pessoa ou questionar atestado. Em uma empresa
   real, o uso destes dados precisa de finalidade informada às pessoas, acesso restrito a quem precisa e revisão periódica.</p>
 </section>
 
@@ -799,7 +800,9 @@ CSS = f"""
 html {{ scroll-behavior: smooth; }}
 body {{ margin: 0; background: var(--creme); color: var(--tinta);
   font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 17px; line-height: 1.6; }}
-p, li {{ text-align: justify; hyphens: auto; -webkit-hyphens: auto; }}
+/* Texto justificado com hifenização só em palavras longas: 10 letras ou mais, com 4 antes e 4 depois do hífen */
+p, li {{ text-align: justify; hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 10 4 4;
+  -webkit-hyphenate-limit-before: 4; -webkit-hyphenate-limit-after: 4; }}
 h1, h2, h3 {{ font-family: Georgia, "Times New Roman", serif; color: var(--verde); line-height: 1.25; }}
 h1 {{ font-size: 2.3rem; margin: .2rem 0 .6rem; color: var(--creme); }}
 h2 {{ font-size: 1.75rem; margin: .2rem 0 1rem; }}
@@ -847,6 +850,22 @@ footer a {{ color: var(--verde); }}
 .fih li {{ margin: .3rem 0; }}
 .fih p {{ margin: 0; }}
 .conta {{ font-size: .85rem; color: var(--cinza); }}
+.marca {{ font-size: .8rem; color: var(--cinza); font-weight: 400; }}
+/* Tabela do índice: no computador, valor e conta em cada célula; até 600 px, só as contribuições e a conta numa linha expansível */
+.tab-indice .cel-curta, .tab-indice .linha-conta {{ display: none; }}
+.tab-indice .linha-conta details summary {{ cursor: pointer; color: var(--verde); font-size: .85rem; }}
+.tab-indice .linha-conta ul {{ margin: .4rem 0 0; padding-left: 1.1rem; }}
+.tab-indice .linha-conta li {{ text-align: left; font-size: .85rem; }}
+@media (max-width: 600px) {{
+  .tab-indice {{ font-size: .76rem; }}
+  .tab-indice th, .tab-indice td {{ padding: .4rem .2rem; }}
+  .tab-indice th {{ hyphens: none; }}
+  .tab-indice td:first-child {{ width: 30%; }}
+  .tab-indice .cel-completa {{ display: none; }}
+  .tab-indice .cel-curta {{ display: inline; }}
+  .tab-indice .linha-conta {{ display: table-row; }}
+  .tab-indice tr:has(+ .linha-conta) td {{ border-bottom: none; }}
+}}
 @media (max-width: 900px) {{ .fih {{ grid-template-columns: 1fr; }} }}
 @media (max-width: 760px) {{
   body {{ font-size: 16px; }}

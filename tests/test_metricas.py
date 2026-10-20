@@ -228,7 +228,6 @@ def test_cenarios_de_custo_baixo_medio_alto():
 
 INDICE = {"peso_rotatividade_12m": 0.4, "peso_saida_90_dias": 0.3, "peso_absenteismo_6m": 0.3,
           "referencia_rotatividade_12m": 1.0, "referencia_saida_90_dias": 0.5, "referencia_absenteismo_6m": 0.08}
-REDE = {"rotatividade_12m": 0.5, "saida_90_dias": 0.2, "absenteismo_6m": 0.02}
 BASE = 5
 
 
@@ -241,7 +240,7 @@ def fatores(**kw):
 
 def test_indice_componentes_de_0_a_1_e_contribuicoes():
     # 0,5 / 1 = 0,5; 0,2 / 0,5 = 0,4; 0,02 / 0,08 = 0,25
-    out = m.indice_risco(fatores(), REDE, INDICE, BASE).iloc[0]
+    out = m.indice_risco(fatores(), INDICE, BASE).iloc[0]
     assert out.comp_rotatividade_12m == pytest.approx(0.5)
     assert out.comp_saida_90_dias == pytest.approx(0.4)
     assert out.comp_absenteismo_6m == pytest.approx(0.25)
@@ -254,7 +253,7 @@ def test_indice_componentes_de_0_a_1_e_contribuicoes():
 def test_componentes_ponderados_somam_o_indice():
     df = pd.concat([fatores(lider="L01"), fatores(lider="L02", rotatividade_12m=2.0, absenteismo_6m=0.3),
                     fatores(lider="L03", saida_90_dias=0.0, absenteismo_6m=0.0)], ignore_index=True)
-    out = m.indice_risco(df, REDE, INDICE, BASE)
+    out = m.indice_risco(df, INDICE, BASE)
     soma = out[[f"contrib_{c}" for c in m.COMPONENTES]].sum(axis=1)
     assert (soma - out["indice"]).abs().max() < 1e-12
     for c in m.COMPONENTES:
@@ -264,7 +263,7 @@ def test_componentes_ponderados_somam_o_indice():
 
 def test_grupo_com_menos_de_5_pessoas_nao_recebe_indice():
     df = pd.concat([fatores(lider="L01", pessoas_12m=4), fatores(lider="L02", pessoas_12m=5)], ignore_index=True)
-    out = m.indice_risco(df, REDE, INDICE, BASE).set_index("lider")
+    out = m.indice_risco(df, INDICE, BASE).set_index("lider")
     assert bool(out.loc["L01", "base_insuficiente"])
     assert math.isnan(out.loc["L01", "indice"])
     assert all(math.isnan(out.loc["L01", f"contrib_{c}"]) for c in m.COMPONENTES)
@@ -272,12 +271,27 @@ def test_grupo_com_menos_de_5_pessoas_nao_recebe_indice():
     assert out.loc["L02", "indice"] == pytest.approx(0.395)
 
 
-def test_poucas_admissoes_usam_a_taxa_da_rede_nos_90_dias():
-    out = m.indice_risco(fatores(admitidos_90_dias=4, saida_90_dias=1.0), REDE, INDICE, BASE).iloc[0]
-    assert bool(out.usa_rede_90_dias)
-    assert out.comp_saida_90_dias == pytest.approx(0.4)   # 0,2 da rede / 0,5
+def test_componente_sem_base_nao_entra_e_os_pesos_restantes_somam_1():
+    # 4 admissões: o componente dos 90 dias sai da conta, sem valor imputado
+    out = m.indice_risco(fatores(admitidos_90_dias=4, saida_90_dias=1.0), INDICE, BASE).iloc[0]
+    assert out.componentes_usados == 2
+    assert math.isnan(out.comp_saida_90_dias) and math.isnan(out.contrib_saida_90_dias)
+    assert math.isnan(out.peso_saida_90_dias)
+    # 0,40 e 0,30 viram 0,40/0,70 e 0,30/0,70 (0,57 e 0,43), que somam 1
+    assert out.peso_rotatividade_12m == pytest.approx(0.4 / 0.7)
+    assert out.peso_absenteismo_6m == pytest.approx(0.3 / 0.7)
+    assert out.peso_rotatividade_12m + out.peso_absenteismo_6m == pytest.approx(1.0)
+    # índice = 0,5 x 0,4/0,7 + 0,25 x 0,3/0,7; a taxa de 90 dias (1,0) não pesa em nada
+    assert out.indice == pytest.approx(0.5 * 0.4 / 0.7 + 0.25 * 0.3 / 0.7)
+    assert out.indice == pytest.approx(out.contrib_rotatividade_12m + out.contrib_absenteismo_6m)
+
+
+def test_com_base_completa_os_tres_componentes_entram_com_os_pesos_declarados():
+    out = m.indice_risco(fatores(), INDICE, BASE).iloc[0]
+    assert out.componentes_usados == 3
+    assert (out.peso_rotatividade_12m, out.peso_saida_90_dias, out.peso_absenteismo_6m) == pytest.approx((0.4, 0.3, 0.3))
 
 
 def test_indice_recusa_pesos_que_nao_somam_1():
     with pytest.raises(ValueError):
-        m.indice_risco(fatores(), REDE, {**INDICE, "peso_absenteismo_6m": 0.5}, BASE)
+        m.indice_risco(fatores(), {**INDICE, "peso_absenteismo_6m": 0.5}, BASE)

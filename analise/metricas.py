@@ -281,17 +281,22 @@ COMPONENTES = {
 }
 
 
-def indice_risco(fatores: pd.DataFrame, rede: dict, premissas_indice: dict, base_minima: int) -> pd.DataFrame:
+# Base de cada componente: quantas pessoas sustentam a taxa do grupo
+BASE_DO_COMPONENTE = {"rotatividade_12m": "pessoas_12m", "saida_90_dias": "admitidos_90_dias", "absenteismo_6m": "pessoas_12m"}
+
+
+def indice_risco(fatores: pd.DataFrame, premissas_indice: dict, base_minima: int) -> pd.DataFrame:
     """Índice de risco por grupo (líder ou área), de 0 a 1, sem modelo de previsão.
 
     fatores: uma linha por grupo, com pessoas_12m, admitidos_90_dias e as colunas de COMPONENTES.
-    Cada componente = valor do grupo / referência, limitado a 1. Contribuição = peso x componente.
-    Índice = soma das contribuições. Os pesos precisam somar 1, então o índice também fica entre 0 e 1.
+    Cada componente = valor do grupo / referência, limitado a 1. Contribuição = peso usado x componente.
+    Índice = soma das contribuições. Os pesos usados somam 1, então o índice também fica entre 0 e 1.
 
-    Regra de base pequena:
+    Regra de base pequena, sem valor imputado:
     * grupo com menos de base_minima pessoas nos últimos 12 meses não recebe índice (fica vazio);
-    * grupo com menos de base_minima admissões não tem taxa própria de saída em 90 dias:
-      o componente usa o valor da rede, e a linha fica marcada em usa_rede_90_dias.
+    * componente cuja base tem menos de base_minima pessoas (por exemplo, menos de 5 admissões no
+      componente dos 90 dias) sai da conta, e os pesos dos componentes restantes são redistribuídos
+      proporcionalmente (0,40 e 0,30 viram 0,57 e 0,43). A coluna componentes_usados diz quantos entraram.
     """
     p = premissas_indice
     soma_pesos = sum(p[peso] for peso, _ in COMPONENTES.values())
@@ -299,17 +304,19 @@ def indice_risco(fatores: pd.DataFrame, rede: dict, premissas_indice: dict, base
         raise ValueError(f"Os pesos do índice precisam somar 1, mas somam {soma_pesos}")
     out = fatores.copy()
     out["base_insuficiente"] = out["pessoas_12m"] < base_minima
-    out["usa_rede_90_dias"] = out["admitidos_90_dias"] < base_minima
+    tem = {c: out[BASE_DO_COMPONENTE[c]] >= base_minima for c in COMPONENTES}
+    peso_disponivel = sum(p[COMPONENTES[c][0]] * tem[c] for c in COMPONENTES)
+    out["componentes_usados"] = sum(tem[c].astype(int) for c in COMPONENTES)
     out["indice"] = 0.0
     for comp, (peso, referencia) in COMPONENTES.items():
-        valor = out[comp]
-        if comp == "saida_90_dias":
-            valor = valor.where(~out["usa_rede_90_dias"], rede[comp])
-        componente = (valor.fillna(0.0) / p[referencia]).clip(lower=0.0, upper=1.0)
-        out[f"comp_{comp}"] = componente
-        out[f"contrib_{comp}"] = p[peso] * componente
-        out["indice"] += out[f"contrib_{comp}"]
-    vazias = ["indice"] + [f"comp_{c}" for c in COMPONENTES] + [f"contrib_{c}" for c in COMPONENTES]
+        componente = (out[comp].fillna(0.0) / p[referencia]).clip(lower=0.0, upper=1.0)
+        peso_usado = (p[peso] / peso_disponivel).where(tem[comp])
+        out[f"comp_{comp}"] = componente.where(tem[comp])
+        out[f"peso_{comp}"] = peso_usado
+        out[f"contrib_{comp}"] = peso_usado * componente
+        out["indice"] += out[f"contrib_{comp}"].fillna(0.0)
+    vazias = (["indice"] + [f"comp_{c}" for c in COMPONENTES] + [f"peso_{c}" for c in COMPONENTES]
+              + [f"contrib_{c}" for c in COMPONENTES])
     out.loc[out["base_insuficiente"], vazias] = np.nan
     return out.sort_values("indice", ascending=False, na_position="last").reset_index(drop=True)
 
