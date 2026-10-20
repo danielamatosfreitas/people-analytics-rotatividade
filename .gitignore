@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.env.*
+
+# Prints de conferência (ficam fora do Git)
+capturas/

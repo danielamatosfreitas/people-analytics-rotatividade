@@ -1,0 +1,116 @@
+# Premissas do projeto. Todos os dados são fictícios.
+# Troque qualquer valor aqui e rode de novo os scripts: nada fica escondido no código.
+
+[periodo]
+inicio = "2024-10-01"        # primeiro mês analisado
+meses = 24                   # quantidade de meses analisados
+
+[geracao]
+semente = 20241020           # semente fixa: a mesma semente gera sempre os mesmos dados
+dias_previstos_mes = 26      # escala 6x1, comum no comércio
+faltas_base_mes = 0.30       # média de faltas por pessoa por mês em uma equipe comum
+# Problemas plantados de propósito, para a análise ter o que encontrar:
+lider_faltas_alto = "L05"              # líder com absenteísmo alto na equipe
+multiplicador_faltas_lider = 2.6
+multiplicador_saida_lider = 1.7
+chance_pedido_lider = 0.75             # na equipe desse líder, quase todas as saídas são pedidos
+multiplicador_saida_90_dias_geral = 1.5   # qualquer pessoa sai mais nos primeiros 90 dias
+area_saida_90_dias = "Caixa"           # área com saídas concentradas nos primeiros 90 dias
+multiplicador_saida_90_dias_area = 7.0    # substitui o multiplicador geral nessa área
+chance_pedido_90_dias_area = 0.60
+multiplicador_saida_primeiro_ano = 1.2    # de 90 dias a 1 ano de casa
+multiplicador_saida_veteranos = 0.8       # mais de 1 ano de casa
+# A falta avisa: nos 3 meses antes de sair, a pessoa falta mais
+multiplicador_faltas_antes_pedido = 3.2
+multiplicador_faltas_antes_empresa = 2.0
+meses_faltas_altas = [1, 2, 7]            # volta às aulas e férias escolares
+multiplicador_faltas_meses_altos = 1.15
+# Chance de a saída ser pedido de demissão (o resto é desligamento pela empresa)
+chance_pedido = 0.55
+chance_pedido_experiencia = 0.45
+# Reposição da vaga: a pessoa nova entra entre 10 e 40 dias depois da saída
+reposicao_dias_min = 10
+reposicao_dias_max = 40
+
+# Chance mensal de saída de quem tem mais de 1 ano de casa, antes dos ajustes acima
+[geracao.risco_base_mes]
+Vendas = 0.036
+Caixa = 0.022
+Estoque = 0.026
+Administrativo = 0.012
+
+# Sazonalidade do comércio: depois do fim de ano saem mais; em novembro e dezembro, menos.
+# Chave = número do mês; meses ausentes valem 1.
+[geracao.sazonalidade]
+1 = 1.6
+2 = 1.4
+11 = 0.6
+12 = 0.6
+
+# Salário mensal por cargo, em reais (fictício). A base de pessoas não tem salário individual.
+[salario_por_cargo]
+"Vendedor(a)" = 2150.0
+"Vendedor(a) sênior" = 2750.0
+"Operador(a) de caixa" = 1820.0
+"Fiscal de caixa" = 2250.0
+"Auxiliar de estoque" = 1820.0
+"Conferente" = 2270.0
+"Assistente administrativo" = 2550.0
+"Assistente de RH" = 2700.0
+"Analista financeiro" = 4000.0
+
+# Custo da rotatividade. Valores em reais, por saída.
+[custo]
+# Encargos e provisões sobre o salário (INSS patronal, FGTS, férias, 13º).
+# 0,70 é uma referência para Lucro Presumido; no Simples Nacional o valor costuma ser menor.
+encargos_sobre_salario = 0.70
+
+# Rescisão: entra só o que existe por causa da saída.
+# Férias e 13º proporcionais não entram, porque seriam pagos de qualquer forma.
+deposito_fgts_mensal = 0.08            # 8% do salário por mês trabalhado
+multa_fgts = 0.40                      # multa de 40% sobre o saldo, quando a empresa desliga
+aviso_previo_dias_base = 30            # aviso prévio indenizado, quando a empresa desliga
+aviso_previo_dias_por_ano = 3          # 3 dias a mais por ano completo de casa
+aviso_previo_dias_maximo = 90
+custo_administrativo_desligamento = 150.0   # exame demissional e horas do RH
+# Saída pela empresa durante a experiência: término no prazo, sem aviso nem multa.
+dias_experiencia = 90
+
+# Reposição: recrutar, admitir e integrar quem vai ocupar a vaga.
+custo_recrutamento = 700.0             # anúncios, triagem e horas de entrevista
+custo_admissao = 300.0                 # exame admissional, uniforme e cadastro
+custo_treinamento = 500.0              # horas de quem treina e material de integração
+
+# Tempo até a pessoa render: produtividade da pessoa nova em cada mês, de 0 a 1.
+# O custo é a parte do salário (com encargos) que ainda não volta em produção.
+produtividade_mes = [0.40, 0.70, 0.90]
+
+# Sensibilidade do custo: o cenário médio usa os valores acima; baixo e alto trocam só os itens listados.
+[custo.cenarios.baixo]
+encargos_sobre_salario = 0.60
+custo_recrutamento = 400.0
+custo_admissao = 200.0
+custo_treinamento = 300.0
+produtividade_mes = [0.60, 0.90]
+
+[custo.cenarios.alto]
+encargos_sobre_salario = 0.80
+custo_recrutamento = 1200.0
+custo_admissao = 400.0
+custo_treinamento = 900.0
+produtividade_mes = [0.30, 0.50, 0.70, 0.90]
+
+# Índice de risco por líder e por área, de 0 a 1.
+# Cada componente vira um número de 0 a 1: valor do grupo dividido pela referência abaixo, com teto em 1.
+# O índice é a soma de peso x componente; os pesos somam 1. Não há modelo de previsão.
+[indice]
+peso_rotatividade_12m = 0.40
+peso_saida_90_dias = 0.30
+peso_absenteismo_6m = 0.30
+referencia_rotatividade_12m = 1.00   # 100% ao ano vale 1
+referencia_saida_90_dias = 0.50      # metade dos admitidos saindo antes de 90 dias vale 1
+referencia_absenteismo_6m = 0.08     # 8% dos dias previstos em falta vale 1
+
+# Regra de base pequena: grupo com menos pessoas que isto não recebe percentual nem índice.
+[relatorio]
+base_minima = 5

@@ -1,0 +1,150 @@
+id,unidade,area,cargo,lider,data_admissao,data_desligamento,tipo_desligamento
+P0001,Loja Centro,Vendas,Vendedor(a) sênior,L01,2016-07-15,,
+P0002,Loja Centro,Caixa,Operador(a) de caixa,L02,2018-08-08,,
+P0003,Loja Shopping,Vendas,Vendedor(a),L05,2018-11-25,2025-03-14,Pedido de demissão
+P0004,Loja Centro,Estoque,Conferente,L03,2018-12-03,,
+P0005,Loja Centro,Estoque,Conferente,L03,2019-12-31,2025-12-30,Pedido de demissão
+P0006,Loja Bairro,Vendas,Vendedor(a),L07,2020-01-28,,
+P0007,Loja Centro,Vendas,Vendedor(a),L01,2020-06-08,2026-07-01,Desligamento pela empresa
+P0008,Loja Bairro,Caixa,Operador(a) de caixa,L08,2021-02-28,,
+P0009,Loja Centro,Administrativo,Assistente administrativo,L10,2021-03-01,2025-01-27,Pedido de demissão
+P0010,Loja Bairro,Vendas,Vendedor(a),L07,2021-03-30,,
+P0011,Loja Bairro,Caixa,Operador(a) de caixa,L08,2021-06-20,2026-01-14,Desligamento pela empresa
+P0012,Loja Shopping,Estoque,Auxiliar de estoque,L06,2021-09-24,,
+P0013,Loja Bairro,Estoque,Conferente,L09,2021-09-28,,
+P0014,Loja Centro,Estoque,Conferente,L03,2021-10-23,2025-11-13,Desligamento pela empresa
+P0015,Loja Bairro,Vendas,Vendedor(a) sênior,L07,2021-11-02,2026-04-10,Pedido de demissão
+P0016,Loja Centro,Caixa,Operador(a) de caixa,L02,2021-11-20,,
+P0017,Loja Shopping,Vendas,Vendedor(a),L05,2021-12-12,2026-04-30,Pedido de demissão
+P0018,Loja Shopping,Caixa,Fiscal de caixa,L04,2022-01-04,,
+P0019,Loja Shopping,Estoque,Auxiliar de estoque,L06,2022-03-25,,
+P0020,Loja Shopping,Vendas,Vendedor(a),L05,2022-04-23,2025-02-15,Pedido de demissão
+P0021,Loja Shopping,Vendas,Vendedor(a),L05,2022-06-02,2026-03-12,Desligamento pela empresa
+P0022,Loja Centro,Vendas,Vendedor(a),L01,2022-09-15,,
+P0023,Loja Centro,Caixa,Operador(a) de caixa,L02,2022-11-07,,
+P0024,Loja Centro,Administrativo,Analista financeiro,L10,2022-11-29,,
+P0025,Loja Shopping,Vendas,Vendedor(a),L05,2022-12-08,,
+P0026,Loja Centro,Vendas,Vendedor(a),L01,2023-01-14,,
+P0027,Loja Centro,Vendas,Vendedor(a),L01,2023-01-31,2025-09-03,Pedido de demissão
+P0028,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2023-02-01,2026-07-29,Pedido de demissão
+P0029,Loja Bairro,Vendas,Vendedor(a),L07,2023-02-25,2025-05-15,Desligamento pela empresa
+P0030,Loja Shopping,Vendas,Vendedor(a),L05,2023-03-14,,
+P0031,Loja Bairro,Caixa,Operador(a) de caixa,L08,2023-03-15,2024-11-08,Desligamento pela empresa
+P0032,Loja Centro,Administrativo,Analista financeiro,L10,2023-03-25,2025-08-28,Desligamento pela empresa
+P0033,Loja Shopping,Vendas,Vendedor(a),L05,2023-05-26,2025-04-12,Pedido de demissão
+P0034,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2023-05-31,2026-07-28,Pedido de demissão
+P0035,Loja Centro,Vendas,Vendedor(a) sênior,L01,2023-06-19,2025-02-21,Desligamento pela empresa
+P0036,Loja Shopping,Caixa,Operador(a) de caixa,L04,2023-07-25,2026-03-11,Pedido de demissão
+P0037,Loja Centro,Caixa,Operador(a) de caixa,L02,2023-09-09,,
+P0038,Loja Centro,Vendas,Vendedor(a),L01,2023-09-10,,
+P0039,Loja Bairro,Estoque,Auxiliar de estoque,L09,2023-09-20,2026-03-15,Pedido de demissão
+P0040,Loja Shopping,Estoque,Auxiliar de estoque,L06,2023-10-25,,
+P0041,Loja Shopping,Caixa,Operador(a) de caixa,L04,2023-11-10,2025-08-24,Desligamento pela empresa
+P0042,Loja Bairro,Estoque,Conferente,L09,2023-11-15,2026-02-16,Desligamento pela empresa
+P0043,Loja Shopping,Caixa,Operador(a) de caixa,L04,2023-12-03,,
+P0044,Loja Shopping,Caixa,Operador(a) de caixa,L04,2023-12-03,2025-03-07,Pedido de demissão
+P0045,Loja Bairro,Vendas,Vendedor(a) sênior,L07,2023-12-07,2026-03-14,Desligamento pela empresa
+P0046,Loja Bairro,Estoque,Auxiliar de estoque,L09,2023-12-12,,
+P0047,Loja Shopping,Vendas,Vendedor(a),L05,2023-12-12,2024-10-06,Pedido de demissão
+P0048,Loja Bairro,Vendas,Vendedor(a),L07,2023-12-21,2025-06-18,Desligamento pela empresa
+P0049,Loja Shopping,Vendas,Vendedor(a),L05,2023-12-28,2025-01-08,Pedido de demissão
+P0050,Loja Bairro,Caixa,Fiscal de caixa,L08,2024-01-03,,
+P0051,Loja Centro,Caixa,Operador(a) de caixa,L02,2024-01-26,2025-12-09,Pedido de demissão
+P0052,Loja Bairro,Caixa,Operador(a) de caixa,L08,2024-02-09,2025-08-24,Desligamento pela empresa
+P0053,Loja Centro,Estoque,Conferente,L03,2024-02-20,2025-09-18,Desligamento pela empresa
+P0054,Loja Bairro,Vendas,Vendedor(a),L07,2024-03-08,2025-10-07,Desligamento pela empresa
+P0055,Loja Centro,Vendas,Vendedor(a),L01,2024-03-25,,
+P0056,Loja Centro,Caixa,Operador(a) de caixa,L02,2024-04-02,2025-04-17,Pedido de demissão
+P0057,Loja Centro,Estoque,Auxiliar de estoque,L03,2024-04-11,2026-01-29,Pedido de demissão
+P0058,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2024-05-14,2024-12-31,Pedido de demissão
+P0059,Loja Centro,Administrativo,Analista financeiro,L10,2024-05-17,2025-06-26,Pedido de demissão
+P0060,Loja Centro,Administrativo,Analista financeiro,L10,2024-05-19,2024-10-12,Desligamento pela empresa
+P0061,Loja Centro,Caixa,Operador(a) de caixa,L02,2024-05-22,,
+P0062,Loja Shopping,Estoque,Conferente,L06,2024-06-04,2024-11-27,Desligamento pela empresa
+P0063,Loja Centro,Vendas,Vendedor(a),L01,2024-06-07,2026-04-22,Pedido de demissão
+P0064,Loja Bairro,Vendas,Vendedor(a),L07,2024-06-13,2026-03-08,Desligamento pela empresa
+P0065,Loja Bairro,Estoque,Auxiliar de estoque,L09,2024-06-17,2024-10-01,Desligamento pela empresa
+P0066,Loja Shopping,Vendas,Vendedor(a),L05,2024-06-26,2026-05-05,Pedido de demissão
+P0067,Loja Shopping,Caixa,Operador(a) de caixa,L04,2024-07-03,,
+P0068,Loja Shopping,Caixa,Fiscal de caixa,L04,2024-07-17,,
+P0069,Loja Bairro,Vendas,Vendedor(a),L07,2024-07-18,2025-01-24,Desligamento pela empresa
+P0070,Loja Centro,Vendas,Vendedor(a),L01,2024-07-19,,
+P0071,Loja Bairro,Caixa,Operador(a) de caixa,L08,2024-07-21,2024-10-14,Pedido de demissão
+P0072,Loja Centro,Vendas,Vendedor(a),L01,2024-07-22,2024-10-04,Desligamento pela empresa
+P0073,Loja Centro,Estoque,Auxiliar de estoque,L03,2024-07-24,,
+P0074,Loja Centro,Vendas,Vendedor(a),L01,2024-08-13,,
+P0075,Loja Centro,Administrativo,Assistente administrativo,L10,2024-08-14,,
+P0076,Loja Shopping,Estoque,Conferente,L06,2024-08-14,,
+P0077,Loja Centro,Administrativo,Assistente administrativo,L10,2024-08-15,,
+P0078,Loja Shopping,Estoque,Auxiliar de estoque,L06,2024-08-29,2025-07-05,Pedido de demissão
+P0079,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2024-09-03,,
+P0080,Loja Shopping,Caixa,Operador(a) de caixa,L04,2024-09-05,,
+P0081,Loja Shopping,Vendas,Vendedor(a),L05,2024-10-16,2025-01-09,Pedido de demissão
+P0082,Loja Bairro,Estoque,Conferente,L09,2024-10-17,,
+P0083,Loja Centro,Vendas,Vendedor(a),L01,2024-10-21,,
+P0084,Loja Bairro,Caixa,Operador(a) de caixa,L08,2024-11-03,,
+P0085,Loja Centro,Administrativo,Assistente de RH,L10,2024-11-13,,
+P0086,Loja Shopping,Estoque,Auxiliar de estoque,L06,2024-12-13,2026-04-29,Pedido de demissão
+P0087,Loja Bairro,Caixa,Fiscal de caixa,L08,2024-12-14,2024-12-31,Pedido de demissão
+P0088,Loja Bairro,Caixa,Operador(a) de caixa,L08,2025-01-12,2025-03-31,Pedido de demissão
+P0089,Loja Shopping,Vendas,Vendedor(a),L05,2025-01-27,,
+P0090,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2025-01-28,,
+P0091,Loja Shopping,Vendas,Vendedor(a),L05,2025-01-29,2025-03-13,Pedido de demissão
+P0092,Loja Bairro,Vendas,Vendedor(a),L07,2025-02-08,,
+P0093,Loja Centro,Administrativo,Assistente de RH,L10,2025-02-21,,
+P0094,Loja Centro,Vendas,Vendedor(a),L01,2025-03-17,2025-08-23,Pedido de demissão
+P0095,Loja Shopping,Caixa,Fiscal de caixa,L04,2025-03-22,2025-06-17,Desligamento pela empresa
+P0096,Loja Shopping,Vendas,Vendedor(a),L05,2025-03-23,2026-08-01,Desligamento pela empresa
+P0097,Loja Shopping,Vendas,Vendedor(a),L05,2025-03-31,2025-04-29,Pedido de demissão
+P0098,Loja Shopping,Vendas,Vendedor(a),L05,2025-04-13,,
+P0099,Loja Bairro,Caixa,Operador(a) de caixa,L08,2025-04-16,2025-06-13,Pedido de demissão
+P0100,Loja Shopping,Vendas,Vendedor(a),L05,2025-04-30,2025-10-24,Pedido de demissão
+P0101,Loja Centro,Caixa,Fiscal de caixa,L02,2025-05-14,2025-06-07,Desligamento pela empresa
+P0102,Loja Shopping,Vendas,Vendedor(a),L05,2025-05-29,,
+P0103,Loja Bairro,Vendas,Vendedor(a),L07,2025-06-11,2025-10-20,Pedido de demissão
+P0104,Loja Centro,Caixa,Operador(a) de caixa,L02,2025-07-06,,
+P0105,Loja Bairro,Caixa,Operador(a) de caixa,L08,2025-07-07,,
+P0106,Loja Shopping,Caixa,Operador(a) de caixa,L04,2025-07-08,2025-08-05,Pedido de demissão
+P0107,Loja Shopping,Estoque,Auxiliar de estoque,L06,2025-07-19,,
+P0108,Loja Centro,Administrativo,Analista financeiro,L10,2025-07-23,,
+P0109,Loja Bairro,Vendas,Vendedor(a),L07,2025-07-26,2026-01-09,Desligamento pela empresa
+P0110,Loja Shopping,Caixa,Operador(a) de caixa,L04,2025-09-04,,
+P0111,Loja Centro,Vendas,Vendedor(a) sênior,L01,2025-09-12,2025-10-02,Pedido de demissão
+P0112,Loja Centro,Administrativo,Assistente de RH,L10,2025-09-18,,
+P0113,Loja Bairro,Caixa,Operador(a) de caixa,L08,2025-09-28,,
+P0114,Loja Shopping,Caixa,Operador(a) de caixa,L04,2025-10-02,2025-12-08,Pedido de demissão
+P0115,Loja Centro,Vendas,Vendedor(a),L01,2025-10-13,,
+P0116,Loja Centro,Vendas,Vendedor(a),L01,2025-10-15,,
+P0117,Loja Centro,Estoque,Auxiliar de estoque,L03,2025-10-25,,
+P0118,Loja Bairro,Vendas,Vendedor(a),L07,2025-11-05,,
+P0119,Loja Bairro,Vendas,Vendedor(a),L07,2025-11-13,,
+P0120,Loja Shopping,Vendas,Vendedor(a),L05,2025-12-03,2025-12-16,Pedido de demissão
+P0121,Loja Centro,Estoque,Conferente,L03,2025-12-09,2026-01-19,Pedido de demissão
+P0122,Loja Shopping,Caixa,Operador(a) de caixa,L04,2025-12-24,,
+P0123,Loja Centro,Caixa,Operador(a) de caixa,L02,2025-12-31,,
+P0124,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2026-01-18,,
+P0125,Loja Centro,Estoque,Auxiliar de estoque,L03,2026-01-25,,
+P0126,Loja Bairro,Caixa,Operador(a) de caixa,L08,2026-02-07,,
+P0127,Loja Centro,Estoque,Conferente,L03,2026-02-12,,
+P0128,Loja Bairro,Vendas,Vendedor(a),L07,2026-02-13,,
+P0129,Loja Centro,Estoque,Auxiliar de estoque,L03,2026-02-18,2026-05-03,Desligamento pela empresa
+P0130,Loja Bairro,Estoque,Auxiliar de estoque,L09,2026-03-12,,
+P0131,Loja Bairro,Vendas,Vendedor(a) sênior,L07,2026-03-30,,
+P0132,Loja Bairro,Estoque,Conferente,L09,2026-04-09,,
+P0133,Loja Bairro,Vendas,Vendedor(a),L07,2026-04-13,2026-06-08,Desligamento pela empresa
+P0134,Loja Shopping,Vendas,Vendedor(a),L05,2026-04-19,2026-06-10,Pedido de demissão
+P0135,Loja Shopping,Caixa,Operador(a) de caixa,L04,2026-04-20,,
+P0136,Loja Bairro,Vendas,Vendedor(a),L07,2026-04-28,,
+P0137,Loja Shopping,Vendas,Vendedor(a),L05,2026-05-15,2026-08-24,Pedido de demissão
+P0138,Loja Centro,Vendas,Vendedor(a),L01,2026-05-22,,
+P0139,Loja Shopping,Vendas,Vendedor(a),L05,2026-05-23,2026-06-18,Pedido de demissão
+P0140,Loja Centro,Estoque,Conferente,L03,2026-05-25,,
+P0141,Loja Shopping,Estoque,Auxiliar de estoque,L06,2026-06-07,,
+P0142,Loja Bairro,Vendas,Vendedor(a) sênior,L07,2026-06-30,,
+P0143,Loja Shopping,Vendas,Vendedor(a),L05,2026-07-09,,
+P0144,Loja Shopping,Vendas,Vendedor(a),L05,2026-07-17,,
+P0145,Loja Centro,Vendas,Vendedor(a) sênior,L01,2026-07-20,,
+P0146,Loja Shopping,Vendas,Vendedor(a),L05,2026-08-20,,
+P0147,Loja Shopping,Vendas,Vendedor(a),L05,2026-08-21,,
+P0148,Loja Shopping,Vendas,Vendedor(a) sênior,L05,2026-08-22,,
+P0149,Loja Shopping,Vendas,Vendedor(a),L05,2026-09-19,,
