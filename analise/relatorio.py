@@ -12,6 +12,26 @@ from analise import metricas as m
 
 LINKEDIN = "https://www.linkedin.com/in/danielamatosfreitas"
 SITE = "https://capitalhumanointelligence.com"
+ENDERECO = "https://danielamatosfreitas.github.io/people-analytics-rotatividade/"
+
+# Prévia do link em redes sociais (Open Graph e Twitter); a capa sai de scripts/gerar_capa.py
+PREVIA = {
+    "og:title": "Rotatividade em uma rede de lojas",
+    "og:description": ("People Analytics com dados fictícios: onde e quando as pessoas saem, saídas na experiência, "
+                       "faltas, custo e índice explicável por área e líder."),
+    "og:image": ENDERECO + "capa.png",
+    "og:image:width": "1200",
+    "og:image:height": "630",
+    "og:url": ENDERECO,
+    "og:type": "website",
+    "og:locale": "pt_BR",
+}
+
+
+def etiquetas_previa() -> str:
+    linhas = [f'<meta property="{k}" content="{html.escape(v)}">' for k, v in PREVIA.items()]
+    linhas.append('<meta name="twitter:card" content="summary_large_image">')
+    return "\n".join(linhas)
 
 # Limites de base; os valores vêm de config/premissas.toml ([relatorio]) quando o relatório é gerado
 BASE_MINIMA = 5     # abaixo disto: sem percentual, sem índice ou componente fora da conta
@@ -865,6 +885,7 @@ def gerar(raiz: Path) -> Path:
 <title>Rotatividade em uma rede de lojas | People Analytics com dados fictícios</title>
 <meta name="description" content="Análise de rotatividade com dados fictícios: onde e quando as pessoas saem, saídas nos 90 dias, faltas antes da saída, custo com cenários e índice por área e por líder.">
 <meta name="author" content="Daniela Matos">
+{etiquetas_previa()}
 <style>{CSS}</style>
 </head>
 <body>

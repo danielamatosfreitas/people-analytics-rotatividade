@@ -74,3 +74,31 @@ def test_relatorio_sem_plural_entre_parenteses():
     assert "(s)" not in texto
     assert r.meses_antes_txt(1) == "1 mês antes da saída" and r.meses_antes_txt(12) == "12 meses antes da saída"
     assert r.saidas_txt(1) == "1 saída" and r.saidas_txt(3) == "3 saídas"
+
+
+def test_etiquetas_de_previa_no_head_com_imagem_em_endereco_absoluto():
+    pagina = (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
+    head = pagina.split("</head>")[0]
+    esperado = {
+        "og:title": "Rotatividade em uma rede de lojas",
+        "og:description": "People Analytics com dados fictícios: onde e quando as pessoas saem, saídas na experiência, "
+                          "faltas, custo e índice explicável por área e líder.",
+        "og:image": "https://danielamatosfreitas.github.io/people-analytics-rotatividade/capa.png",
+        "og:image:width": "1200",
+        "og:image:height": "630",
+        "og:url": "https://danielamatosfreitas.github.io/people-analytics-rotatividade/",
+        "og:type": "website",
+        "og:locale": "pt_BR",
+    }
+    for prop, valor in esperado.items():
+        achados = re.findall(rf'<meta property="{re.escape(prop)}" content="([^"]*)">', head)
+        assert achados == [valor], prop
+    assert '<meta name="twitter:card" content="summary_large_image">' in head
+    # a imagem tem de estar no ar no mesmo endereço: docs/ vira a raiz do site, e o tamanho declarado é o real
+    imagem = re.search(r'<meta property="og:image" content="([^"]+)">', head).group(1)
+    assert imagem.startswith("https://") and imagem.endswith("/capa.png")
+    capa = RAIZ / "docs" / "capa.png"
+    assert capa.exists()
+    cabecalho = capa.read_bytes()[:24]
+    assert cabecalho[:8] == b"\x89PNG\r\n\x1a\n"
+    assert int.from_bytes(cabecalho[16:20], "big") == 1200 and int.from_bytes(cabecalho[20:24], "big") == 630

@@ -93,11 +93,11 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 
 ### Como os testes funcionam
 
-`python -m pytest` roda 30 testes, sem internet e em poucos segundos:
+`python -m pytest` roda 32 testes, sem internet e em poucos segundos:
 
 * **Dados** (`tests/test_dados.py`): a mesma semente gera exatamente os mesmos dados e o CSV incluído no repositório é igual ao gerado; nenhuma coluna sensível nem salário individual; os totais batem (quadro do mês anterior mais admissões menos saídas igual ao quadro do mês, em todos os meses, e a soma das áreas igual à rede).
 * **Métricas** (`tests/test_metricas.py`): casos pequenos montados à mão, em que o resultado certo se confere de cabeça (rotatividade, 90 dias, faltas com grupo de comparação, custo e cenários). No índice: os componentes ponderados somam o índice, grupos com menos de 5 pessoas não recebem índice e componente sem base não entra (os pesos restantes somam 1).
-* **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "sem percentual" abaixo de 5, frase do asterisco com exatamente as equipes fora da base pequena, fim de cada barra do gráfico do índice igual ao índice e plotly por CDN.
+* **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "sem percentual" abaixo de 5, frase do asterisco com exatamente as equipes fora da base pequena, fim de cada barra do gráfico do índice igual ao índice, plotly por CDN e etiquetas de prévia (Open Graph) com a capa em endereço absoluto e no tamanho declarado.
 
 ### Estrutura
 
@@ -105,10 +105,12 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 config/premissas.toml     premissas de geração, salário por cargo, custo, cenários e índice
 scripts/gerar_dados.py    gera dados/pessoas.csv e dados/faltas_mensais.csv
 scripts/gerar_relatorio.py  gera docs/index.html
+scripts/gerar_capa.py     gera docs/capa.png, a imagem de prévia do link (precisa do Chrome)
 analise/metricas.py       funções de cálculo (sem leitura de arquivo nem gráfico)
 analise/relatorio.py      monta o HTML; o plotly vem por CDN
 tests/                    testes dos dados, das métricas e do relatório
 docs/index.html           relatório, pronto para o GitHub Pages
+docs/capa.png             imagem de prévia do relatório em redes sociais (1200 x 630)
 ```
 
 ### Limitações
@@ -178,7 +180,7 @@ The first script generates the fictitious data (fixed seed), the second runs the
 
 ### Tests
 
-`python -m pytest` runs 30 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value; the asterisk note names exactly the teams outside the small base.
+`python -m pytest` runs 32 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value; the asterisk note names exactly the teams outside the small base; the link preview tags point to the cover image by absolute URL and match its real size.
 
 ### Author and license
 
