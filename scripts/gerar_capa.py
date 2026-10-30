@@ -1,4 +1,4 @@
-"""Gera docs/capa.png (1200 x 630), a imagem de prévia do relatório em redes sociais.
+"""Gera docs/capa-2026-10.png (1200 x 630), a imagem de prévia do relatório em redes sociais.
 
 Monta um HTML com as cores e fontes do relatório e um gráfico simplificado do índice por líder
 (barras empilhadas com as três cores, sem eixos), e salva a tela do Chrome em modo headless como PNG.
@@ -115,5 +115,5 @@ h1 {{ font-family: {FONTE_TITULO}; font-weight: 400; color: {VERDE}; font-size: 
 
 
 if __name__ == "__main__":
-    destino = renderizar_png(pagina_capa(barras_indice()), RAIZ / "docs" / "capa.png", LARGURA, ALTURA)
+    destino = renderizar_png(pagina_capa(barras_indice()), RAIZ / "docs" / "capa-2026-10.png", LARGURA, ALTURA)
     print(f"Capa gerada em {destino.relative_to(RAIZ)}")

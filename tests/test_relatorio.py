@@ -83,7 +83,7 @@ def test_etiquetas_de_previa_no_head_com_imagem_em_endereco_absoluto():
         "og:title": "Rotatividade em uma rede de lojas",
         "og:description": "People Analytics com dados fictícios: onde e quando as pessoas saem, saídas na experiência, "
                           "faltas, custo e índice explicável por área e líder.",
-        "og:image": "https://danielamatosfreitas.github.io/people-analytics-rotatividade/capa.png",
+        "og:image": "https://danielamatosfreitas.github.io/people-analytics-rotatividade/capa-2026-10.png",
         "og:image:width": "1200",
         "og:image:height": "630",
         "og:url": "https://danielamatosfreitas.github.io/people-analytics-rotatividade/",
@@ -96,8 +96,8 @@ def test_etiquetas_de_previa_no_head_com_imagem_em_endereco_absoluto():
     assert '<meta name="twitter:card" content="summary_large_image">' in head
     # a imagem tem de estar no ar no mesmo endereço: docs/ vira a raiz do site, e o tamanho declarado é o real
     imagem = re.search(r'<meta property="og:image" content="([^"]+)">', head).group(1)
-    assert imagem.startswith("https://") and imagem.endswith("/capa.png")
-    capa = RAIZ / "docs" / "capa.png"
+    assert imagem.startswith("https://") and imagem.endswith("/capa-2026-10.png")
+    capa = RAIZ / "docs" / "capa-2026-10.png"
     assert capa.exists()
     cabecalho = capa.read_bytes()[:24]
     assert cabecalho[:8] == b"\x89PNG\r\n\x1a\n"

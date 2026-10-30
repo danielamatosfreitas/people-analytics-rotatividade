@@ -19,7 +19,7 @@ PREVIA = {
     "og:title": "Rotatividade em uma rede de lojas",
     "og:description": ("People Analytics com dados fictícios: onde e quando as pessoas saem, saídas na experiência, "
                        "faltas, custo e índice explicável por área e líder."),
-    "og:image": ENDERECO + "capa.png",
+    "og:image": ENDERECO + "capa-2026-10.png",
     "og:image:width": "1200",
     "og:image:height": "630",
     "og:url": ENDERECO,
