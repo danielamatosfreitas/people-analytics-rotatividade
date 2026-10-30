@@ -1,4 +1,7 @@
-"""Gera docs/capa-2026-10.png (1200 x 630), a imagem de prévia do relatório em redes sociais.
+"""Gera uma capa de barras (1200 x 630) em capturas/para-revisao/capa-gerada.png, só para conferência.
+
+A capa publicada (docs/capa-2026-10.png) vem do sistema de peças (capturas/scripts/montar_pecas.py);
+este script nunca grava dentro de docs, para não sobrescrever a capa aprovada.
 
 Monta um HTML com as cores e fontes do relatório e um gráfico simplificado do índice por líder
 (barras empilhadas com as três cores, sem eixos), e salva a tela do Chrome em modo headless como PNG.
@@ -115,5 +118,7 @@ h1 {{ font-family: {FONTE_TITULO}; font-weight: 400; color: {VERDE}; font-size: 
 
 
 if __name__ == "__main__":
-    destino = renderizar_png(pagina_capa(barras_indice()), RAIZ / "docs" / "capa-2026-10.png", LARGURA, ALTURA)
+    print("Aviso: a capa publicada (docs/capa-2026-10.png) vem do sistema de peças; esta é só uma capa de conferência.")
+    destino = renderizar_png(pagina_capa(barras_indice()), RAIZ / "capturas" / "para-revisao" / "capa-gerada.png",
+                             LARGURA, ALTURA)
     print(f"Capa gerada em {destino.relative_to(RAIZ)}")

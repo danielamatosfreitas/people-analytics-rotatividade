@@ -105,12 +105,12 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 config/premissas.toml     premissas de geração, salário por cargo, custo, cenários e índice
 scripts/gerar_dados.py    gera dados/pessoas.csv e dados/faltas_mensais.csv
 scripts/gerar_relatorio.py  gera docs/index.html
-scripts/gerar_capa.py     gera docs/capa-2026-10.png, a imagem de prévia do link (precisa do Chrome)
+scripts/gerar_capa.py     gera uma capa de conferência em capturas/para-revisao (nunca grava em docs; precisa do Chrome)
 analise/metricas.py       funções de cálculo (sem leitura de arquivo nem gráfico)
 analise/relatorio.py      monta o HTML; o plotly vem por CDN
 tests/                    testes dos dados, das métricas e do relatório
 docs/index.html           relatório, pronto para o GitHub Pages
-docs/capa-2026-10.png     imagem de prévia do relatório em redes sociais (1200 x 630)
+docs/capa-2026-10.png     imagem de prévia do relatório em redes sociais (1200 x 630), montada pelo sistema de peças
 ```
 
 ### Limitações
