@@ -376,10 +376,15 @@ def gerar(raiz: Path) -> Path:
     saidas = int(total["saidas"])
     n_pedido, n_empresa = int(total["saidas_pedido"]), int(total["saidas_empresa"])
     picos = mensal.sort_values(["saidas", "mes"], ascending=[False, True]).head(2)
-    tri = mensal["mes"].map(lambda p: p.month in (1, 2, 3))
-    saidas_tri, meses_tri = int(mensal.loc[tri, "saidas"].sum()), int(tri.sum())
-    saidas_resto, meses_resto = int(mensal.loc[~tri, "saidas"].sum()), int((~tri).sum())
-    media_tri, media_resto = saidas_tri / meses_tri, saidas_resto / meses_resto
+    # Hipótese da sazonalidade: meses com mais saídas no gerador (fator acima de 1) contra os meses comuns (sem fator)
+    saz = {int(k): v for k, v in premissas["geracao"]["sazonalidade"].items()}
+    altos = mensal["mes"].map(lambda p: saz.get(p.month, 1.0) > 1)
+    comuns = mensal["mes"].map(lambda p: p.month not in saz)
+    meses_altos_txt = lista([MESES_PT_LONGO[k - 1] for k in sorted(saz) if saz[k] > 1])
+    saidas_altos, n_altos = int(mensal.loc[altos, "saidas"].sum()), int(altos.sum())
+    saidas_comuns, n_comuns = int(mensal.loc[comuns, "saidas"].sum()), int(comuns.sum())
+    media_altos, media_comuns = saidas_altos / n_altos, saidas_comuns / n_comuns
+    sazonalidade_confirmada = media_altos > media_comuns
     area_ord = anual_area.sort_values("taxa_anual", ascending=False)
     unid_ord = anual_unid.sort_values("taxa_anual", ascending=False)
     area_top = area_ord.iloc[0]
@@ -626,12 +631,24 @@ def gerar(raiz: Path) -> Path:
     <li>{fracao(n_pedido, saidas)} das saídas foram pedidos de demissão.</li>
     <li>{area_top['area']} tem a maior rotatividade entre as áreas: {taxa_ano(area_top['taxa_anual'], area_top['saidas'], area_top['quadro_medio'], area_top['pessoas'])}.</li>
     <li>{unid_ord.iloc[0]['unidade']} tem a maior entre as unidades: {taxa_ano(unid_ord.iloc[0]['taxa_anual'], unid_ord.iloc[0]['saidas'], unid_ord.iloc[0]['quadro_medio'], unid_ord.iloc[0]['pessoas'])}.</li>
+    <li>{meses_altos_txt.capitalize()} tiveram {saidas_txt(saidas_altos)} em {n_altos} meses ({num(media_altos, 2)} por mês); os meses comuns, sem ajuste de época no gerador, {saidas_txt(saidas_comuns)} em {n_comuns} meses ({num(media_comuns, 2)} por mês).</li>
     </ul>"""
-    p1_interp = f"""<p>{area_top['area']} concentra a maior rotatividade da rede{", e os pedidos de demissão são a maior parte das saídas, o que aponta mais para decisões de quem trabalha do que para cortes" if n_pedido > n_empresa else ""}. {"No gráfico mensal, o começo do ano pesa mais: é o padrão do comércio, em que parte das pessoas espera passar o fim de ano para sair." if media_tri > 1.2 * media_resto else "Não há uma época do ano claramente mais pesada."}
+    sazonal_interp = (
+        f"{meses_altos_txt.capitalize()} têm mais saídas por mês do que os meses comuns, como no padrão colocado no gerador."
+        if sazonalidade_confirmada else
+        f"O gerador tinha mais chance de saída em {meses_altos_txt}, mas o padrão não apareceu: esses meses ficaram abaixo dos meses comuns. "
+        f"Com {saidas} saídas em {len(mensal)} meses, poucas saídas por mês, o sorteio pesa mais do que o padrão.")
+    p1_interp = f"""<p>{area_top['area']} concentra a maior rotatividade da rede{", e os pedidos de demissão são a maior parte das saídas, o que aponta mais para decisões de quem trabalha do que para cortes" if n_pedido > n_empresa else ""}. {sazonal_interp}
     Em equipes pequenas, duas ou três saídas já mudam muito a taxa, então a leitura por equipe vale como sinal para investigar.</p>"""
-    p1_hipo = f"""<p>Na vida real seria preciso verificar: se as saídas do começo do ano vêm de quem espera o 13º e as festas
-    (entrevista de desligamento com as mesmas perguntas para todos); se a rotatividade de {area_top['area']} acompanha meta, comissão e escala;
-    e se a diferença entre unidades se repete em outro ano ou é efeito de poucas pessoas.</p>"""
+    resto_hipo = (f"se a rotatividade de {area_top['area']} acompanha meta, comissão e escala;\n"
+                  "    e se a diferença entre unidades se repete em outro ano ou é efeito de poucas pessoas.")
+    p1_hipo = (f"""<p>Na vida real seria preciso verificar: se as saídas de {meses_altos_txt} vêm de quem espera o 13º e as festas
+    (entrevista de desligamento com as mesmas perguntas para todos); {resto_hipo}</p>"""
+               if sazonalidade_confirmada else
+               f"""<p>Hipótese testada e não confirmada: mais pessoas sairiam em {meses_altos_txt}, depois do 13º e das festas.
+    Nesta base, {meses_altos_txt} ficaram com {num(media_altos, 2)} saídas por mês, contra {num(media_comuns, 2)} nos meses comuns.
+    Com dados reais, valeria testar de novo com mais anos de histórico.</p>
+    <p>Também seria preciso verificar {resto_hipo}</p>""")
 
     a90_nome = a90_top["area"]
     p2_fato = f"""<ul>

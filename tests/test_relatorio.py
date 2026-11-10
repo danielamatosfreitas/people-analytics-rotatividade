@@ -66,6 +66,26 @@ def test_frase_do_asterisco_cita_exatamente_as_equipes_que_escapam_da_marcacao()
     assert frase in (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
 
 
+def test_sazonalidade_da_pergunta_1_sai_dos_dados():
+    # conta independente: saídas por mês nos meses com fator acima de 1 no gerador contra os meses sem fator
+    from analise import metricas as m
+    premissas = m.carregar_premissas(RAIZ / "config" / "premissas.toml")
+    pessoas, _ = m.carregar_dados(RAIZ / "dados")
+    saz = {int(k): v for k, v in premissas["geracao"]["sazonalidade"].items()}
+    meses = m.meses_do_periodo(premissas["periodo"]["inicio"], premissas["periodo"]["meses"])
+    saida = pessoas["data_desligamento"].dropna().dt.to_period("M")
+    por_mes = {p: int((saida == p).sum()) for p in meses}
+    altos = [p for p in meses if saz.get(p.month, 1.0) > 1]
+    comuns = [p for p in meses if p.month not in saz]
+    media_altos = sum(por_mes[p] for p in altos) / len(altos)
+    media_comuns = sum(por_mes[p] for p in comuns) / len(comuns)
+    pagina = (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
+    assert f"({r.num(media_altos, 2)} por mês)" in pagina and f"({r.num(media_comuns, 2)} por mês)" in pagina
+    if media_altos <= media_comuns:
+        assert "o começo do ano pesa mais" not in pagina
+        assert "Hipótese testada e não confirmada" in pagina
+
+
 def test_relatorio_sem_plural_entre_parenteses():
     # o HTML guarda os textos dos gráficos com acentos escapados (\u00ea); decodifica antes de procurar
     pagina = (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
