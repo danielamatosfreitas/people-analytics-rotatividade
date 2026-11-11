@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -378,13 +379,21 @@ def gerar(raiz: Path) -> Path:
     picos = mensal.sort_values(["saidas", "mes"], ascending=[False, True]).head(2)
     # Hipótese da sazonalidade: meses com mais saídas no gerador (fator acima de 1) contra os meses comuns (sem fator)
     saz = {int(k): v for k, v in premissas["geracao"]["sazonalidade"].items()}
-    altos = mensal["mes"].map(lambda p: saz.get(p.month, 1.0) > 1)
-    comuns = mensal["mes"].map(lambda p: p.month not in saz)
     meses_altos_txt = lista([MESES_PT_LONGO[k - 1] for k in sorted(saz) if saz[k] > 1])
-    saidas_altos, n_altos = int(mensal.loc[altos, "saidas"].sum()), int(altos.sum())
-    saidas_comuns, n_comuns = int(mensal.loc[comuns, "saidas"].sum()), int(comuns.sum())
-    media_altos, media_comuns = saidas_altos / n_altos, saidas_comuns / n_comuns
+    comp = m.comparacao_sazonalidade(mensal, saz)
+    saidas_altos, n_altos, media_altos = comp["saidas_altos"], comp["n_altos"], comp["media_altos"]
+    saidas_comuns, n_comuns, media_comuns = comp["saidas_comuns"], comp["n_comuns"], comp["media_comuns"]
     sazonalidade_confirmada = media_altos > media_comuns
+    # Poder do método (scripts/poder_sazonalidade.py): em quantos sorteios do gerador o padrão aparece
+    poder = json.loads((raiz / "dados" / "poder_sazonalidade.json").read_text(encoding="utf-8"))
+    n_sorteios, x_sorteios = poder["sorteios"], poder["sorteios_com_meses_altos_acima"]
+    poder_fato = (f"Rodando o gerador com {n_sorteios} sementes, a sazonalidade plantada aparece em {x_sorteios} de "
+                  f"{n_sorteios} sorteios ({meses_altos_txt} com mais saídas por mês do que os meses comuns).")
+    poder_interp = (f"Em linguagem simples: o efeito existe no gerador, porém um único sorteio de "
+                    f"{premissas['periodo']['meses']} meses numa rede deste tamanho pode não mostrá-lo. "
+                    + (f"O sorteio deste relatório ({num(media_altos, 2)} contra {num(media_comuns, 2)} saídas por mês) "
+                       f"é um dos casos em que ele não aparece." if not sazonalidade_confirmada else
+                       "No sorteio deste relatório ele aparece."))
     area_ord = anual_area.sort_values("taxa_anual", ascending=False)
     unid_ord = anual_unid.sort_values("taxa_anual", ascending=False)
     area_top = area_ord.iloc[0]
@@ -879,6 +888,7 @@ def gerar(raiz: Path) -> Path:
   <ul>
     <li>Os dados são fictícios e os padrões foram plantados; os resultados demonstram o método e não dizem nada sobre o varejo.</li>
     <li>As equipes têm de 5 a 14 vagas. Uma ou duas saídas mudam muito as taxas; nenhum resultado por equipe tem significância estatística.</li>
+    <li>{poder_fato} {poder_interp}</li>
     <li>Cada pessoa tem um único líder durante todo o tempo de casa.</li>
     <li>O custo usa o salário do cargo, sem reajustes, comissões, benefícios ou horas extras.</li>
     <li>A rotatividade usa saídas sobre o quadro médio. A fórmula que soma admissões e saídas e divide por dois dá números parecidos aqui, porque quase toda vaga é reposta.</li>

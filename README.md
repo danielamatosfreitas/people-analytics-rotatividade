@@ -94,11 +94,12 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 
 ### Como os testes funcionam
 
-`python -m pytest` roda 33 testes, sem internet e em poucos segundos:
+`python -m pytest` roda 35 testes, sem internet: 34 em poucos segundos e o do poder da sazonalidade em cerca de 1 minuto, porque roda o gerador 200 vezes:
 
 * **Dados** (`tests/test_dados.py`): a mesma semente gera exatamente os mesmos dados e o CSV incluído no repositório é igual ao gerado; nenhuma coluna sensível nem salário individual; os totais batem (quadro do mês anterior mais admissões menos saídas igual ao quadro do mês, em todos os meses, e a soma das áreas igual à rede).
 * **Métricas** (`tests/test_metricas.py`): casos pequenos montados à mão, em que o resultado certo se confere de cabeça (rotatividade, 90 dias, faltas com grupo de comparação, custo e cenários). No índice: os componentes ponderados somam o índice, grupos com menos de 5 pessoas não recebem índice e componente sem base não entra (os pesos restantes somam 1).
 * **Relatório** (`tests/test_relatorio.py`): percentual sempre com o número absoluto, "sem percentual" abaixo de 5, frase do asterisco com exatamente as equipes fora da base pequena, números da sazonalidade da Pergunta 1 iguais aos dados, fim de cada barra do gráfico do índice igual ao índice, plotly por CDN e etiquetas de prévia (Open Graph) com a capa em endereço absoluto e no tamanho declarado.
+* **Poder da sazonalidade** (`tests/test_poder.py`): o script, com a mesma lista de sementes, reproduz o mesmo resultado gravado em `dados/poder_sazonalidade.json` e publicado nas Limitações; e gerar os dados sem as faltas (atalho do script) não muda as pessoas sorteadas.
 
 ### Estrutura
 
@@ -106,6 +107,7 @@ Todas as premissas (geração dos dados, salário por cargo, custo e cenários, 
 config/premissas.toml     premissas de geração, salário por cargo, custo, cenários e índice
 scripts/gerar_dados.py    gera dados/pessoas.csv e dados/faltas_mensais.csv
 scripts/gerar_relatorio.py  gera docs/index.html
+scripts/poder_sazonalidade.py  roda o gerador com as sementes de 1 a 200 e conta em quantos sorteios a sazonalidade plantada aparece (grava dados/poder_sazonalidade.json; rodar com python scripts/poder_sazonalidade.py, cerca de 1 minuto)
 scripts/gerar_capa.py     gera uma capa de conferência em capturas/para-revisao (nunca grava em docs; precisa do Chrome)
 analise/metricas.py       funções de cálculo (sem leitura de arquivo nem gráfico)
 analise/relatorio.py      monta o HTML; o plotly vem por CDN
@@ -182,7 +184,7 @@ The first script generates the fictitious data (fixed seed), the second runs the
 
 ### Tests
 
-`python -m pytest` runs 33 tests, offline, in a few seconds: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value; the asterisk note names exactly the teams outside the small base; the Question 1 seasonality numbers match the data; the link preview tags point to the cover image by absolute URL and match its real size.
+`python -m pytest` runs 35 tests, offline: 34 in a few seconds and the seasonality power test in about a minute, since it runs the generator 200 times: the same seed produces exactly the same data and the committed CSV matches it; no sensitive column and no individual salary; totals add up (previous month headcount plus hires minus exits equals the month's headcount, every month); weighted components add up to the index; groups with fewer than 5 people get no index; a component without base is left out and the remaining weights add up to 1; every percentage in the report comes with its absolute number; each bar in the index chart ends exactly at the index value; the asterisk note names exactly the teams outside the small base; the Question 1 seasonality numbers match the data; the link preview tags point to the cover image by absolute URL and match its real size; `scripts/poder_sazonalidade.py`, with the same list of seeds, reproduces the result shown in the Limitations section.
 
 ### Author and license
 

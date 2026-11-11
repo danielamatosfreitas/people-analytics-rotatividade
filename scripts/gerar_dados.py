@@ -59,7 +59,9 @@ def sortear_cargo(rng, area):
     return opcoes[i][0]
 
 
-def gerar(premissas: dict, semente: int | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+def gerar(premissas: dict, semente: int | None = None, com_faltas: bool = True) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """com_faltas=False pula o sorteio das faltas (mais rápido; as pessoas saem iguais, porque as faltas
+    são sorteadas depois) e devolve a tabela de faltas vazia. Usado por scripts/poder_sazonalidade.py."""
     g = premissas["geracao"]
     rng = np.random.default_rng(g["semente"] if semente is None else semente)
     risco_base = g["risco_base_mes"]
@@ -148,6 +150,10 @@ def gerar(premissas: dict, semente: int | None = None) -> tuple[pd.DataFrame, pd
     df = pd.DataFrame(pessoas)
     df = df.sort_values(["data_admissao", "unidade", "area"]).reset_index(drop=True)
     df["id"] = [f"P{i:04d}" for i in range(1, len(df) + 1)]
+    if not com_faltas:
+        df["data_admissao"] = df["data_admissao"].dt.date
+        df["data_desligamento"] = df["data_desligamento"].dt.date
+        return df[COLUNAS_PESSOAS], pd.DataFrame(columns=COLUNAS_FALTAS)
 
     # Faltas por mês
     linhas = []

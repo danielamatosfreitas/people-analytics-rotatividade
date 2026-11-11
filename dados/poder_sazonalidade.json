@@ -1,0 +1,9 @@
+{
+  "sementes": "1 a 200",
+  "sorteios": 200,
+  "sorteios_com_meses_altos_acima": 185,
+  "diferenca_media": 1.3013,
+  "diferenca_percentil_10": 0.1875,
+  "diferenca_percentil_90": 2.5062,
+  "unidade": "saídas por mês (média dos meses com fator acima de 1 menos a média dos meses comuns)"
+}

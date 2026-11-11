@@ -116,6 +116,19 @@ def rotatividade_anualizada(mensal: pd.DataFrame, por: list[str] | None = None) 
     return out.rename(columns={"mes": "meses"})
 
 
+def comparacao_sazonalidade(mensal: pd.DataFrame, sazonalidade: dict) -> dict:
+    """Saídas por mês nos meses com fator acima de 1 no gerador contra os meses comuns (sem fator).
+
+    Regra da Pergunta 1. sazonalidade: {número do mês: fator}; meses ausentes valem 1.
+    """
+    altos = mensal["mes"].map(lambda p: sazonalidade.get(p.month, 1.0) > 1)
+    comuns = mensal["mes"].map(lambda p: p.month not in sazonalidade)
+    saidas_altos, n_altos = int(mensal.loc[altos, "saidas"].sum()), int(altos.sum())
+    saidas_comuns, n_comuns = int(mensal.loc[comuns, "saidas"].sum()), int(comuns.sum())
+    return {"saidas_altos": saidas_altos, "n_altos": n_altos, "media_altos": saidas_altos / n_altos,
+            "saidas_comuns": saidas_comuns, "n_comuns": n_comuns, "media_comuns": saidas_comuns / n_comuns}
+
+
 # ---------------------------------------------------------------- primeiros 90 dias
 
 def saida_90_dias(pessoas: pd.DataFrame, inicio, data_corte, por: list[str] | None = None, dias: int = 90) -> pd.DataFrame:
