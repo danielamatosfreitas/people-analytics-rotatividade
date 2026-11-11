@@ -387,13 +387,18 @@ def gerar(raiz: Path) -> Path:
     # Poder do método (scripts/poder_sazonalidade.py): em quantos sorteios do gerador o padrão aparece
     poder = json.loads((raiz / "dados" / "poder_sazonalidade.json").read_text(encoding="utf-8"))
     n_sorteios, x_sorteios = poder["sorteios"], poder["sorteios_com_meses_altos_acima"]
-    poder_fato = (f"Rodando o gerador com {n_sorteios} sementes, a sazonalidade plantada aparece em {x_sorteios} de "
-                  f"{n_sorteios} sorteios ({meses_altos_txt} com mais saídas por mês do que os meses comuns).")
-    poder_interp = (f"Em linguagem simples: o efeito existe no gerador, porém um único sorteio de "
-                    f"{premissas['periodo']['meses']} meses numa rede deste tamanho pode não mostrá-lo. "
-                    + (f"O sorteio deste relatório ({num(media_altos, 2)} contra {num(media_comuns, 2)} saídas por mês) "
-                       f"é um dos casos em que ele não aparece." if not sazonalidade_confirmada else
-                       "No sorteio deste relatório ele aparece."))
+    dif_media = poder["diferenca_media"]
+    poder_fato = (f"Em {n_sorteios} sorteios com sementes diferentes, {meses_altos_txt} ficam acima dos meses comuns em "
+                  f"{x_sorteios} ({pct(x_sorteios / n_sorteios, 1)}), com diferença média de {num(dif_media, 2)} "
+                  f"{'saída' if abs(dif_media) < 2 else 'saídas'} por mês. "
+                  + (f"O sorteio deste relatório ({num(media_altos, 2)} contra {num(media_comuns, 2)}) está entre os "
+                     f"{n_sorteios - x_sorteios} em que isso não acontece." if not sazonalidade_confirmada else
+                     f"O sorteio deste relatório ({num(media_altos, 2)} contra {num(media_comuns, 2)}) está entre os "
+                     f"{x_sorteios} em que isso acontece."))
+    poder_interp = (f"Em linguagem simples: o efeito existe no gerador, mas um único período de "
+                    f"{premissas['periodo']['meses']} meses numa rede deste tamanho pode escondê-lo. "
+                    f'Com dados reais só existe um sorteio, por isso "hipótese não confirmada" não quer dizer '
+                    f'"efeito inexistente".')
     area_ord = anual_area.sort_values("taxa_anual", ascending=False)
     unid_ord = anual_unid.sort_values("taxa_anual", ascending=False)
     area_top = area_ord.iloc[0]

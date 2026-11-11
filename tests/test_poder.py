@@ -22,7 +22,9 @@ def test_poder_da_sazonalidade_reproduz_o_mesmo_x_de_n():
     # e é esse o número publicado nas Limitações
     n, x = gravado["sorteios"], gravado["sorteios_com_meses_altos_acima"]
     pagina = (RAIZ / "docs" / "index.html").read_text(encoding="utf-8")
-    assert f"Rodando o gerador com {n} sementes, a sazonalidade plantada aparece em {x} de {n} sorteios" in pagina
+    pct = f"{100 * x / n:.1f}".replace(".", ",")
+    assert f"Em {n} sorteios com sementes diferentes, janeiro e fevereiro ficam acima dos meses comuns em {x} ({pct}%)" in pagina
+    assert f"está entre os {n - x} em que isso não acontece" in pagina
 
 
 def test_sem_faltas_as_pessoas_saem_iguais():
